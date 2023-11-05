@@ -13,3 +13,7 @@ base-url: /api
 server:
   address: 0.0.0.0
   port: ${PORT:8080}
+
+rsa:
+  private-key: classpath:certs/private.pem
+  public-key: classpath:certs/public.pem
