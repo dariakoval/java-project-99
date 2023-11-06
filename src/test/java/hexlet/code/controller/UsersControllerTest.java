@@ -212,7 +212,7 @@ public class UsersControllerTest {
                 "passwordDigest", faker.internet().password(3, 12)
         );
 
-        var request = put("/api/users/" + testUser.getId()).with(jwt())
+        var request = put("/api/users/{id}", testUser.getId()).with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
@@ -238,7 +238,7 @@ public class UsersControllerTest {
                 "lastName", faker.name().lastName()
         );
 
-        var request = put("/api/users/" + testUser.getId()).with(jwt())
+        var request = put("/api/users/{id}", testUser.getId()).with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
@@ -267,7 +267,7 @@ public class UsersControllerTest {
                 "passwordDigest", faker.internet().password(3, 12)
         );
 
-        var request = put("/api/users/" + testUser.getId())
+        var request = put("/api/users/{id}", testUser.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
