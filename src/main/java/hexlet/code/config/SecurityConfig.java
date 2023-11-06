@@ -39,8 +39,10 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(mvcMatcherBuilder.pattern( "/api/login")).permitAll()
-                        .requestMatchers(mvcMatcherBuilder.pattern(HttpMethod.POST,  "/api/users")).permitAll()
+                        .requestMatchers(mvcMatcherBuilder.pattern("/")).permitAll()
+                        .requestMatchers(mvcMatcherBuilder.pattern("/welcome")).permitAll()
+                        .requestMatchers(mvcMatcherBuilder.pattern("/api/login")).permitAll()
+                        .requestMatchers(mvcMatcherBuilder.pattern(HttpMethod.POST, "/api/users")).permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer((rs) -> rs.jwt((jwt) -> jwt.decoder(jwtDecoder)))

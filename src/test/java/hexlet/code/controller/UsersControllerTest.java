@@ -18,6 +18,7 @@ import java.util.Map;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -49,7 +50,7 @@ public class UsersControllerTest {
                 .supply(Select.field(User::getEmail), () -> faker.internet().emailAddress())
                 .supply(Select.field(User::getFirstName), () -> faker.name().firstName())
                 .supply(Select.field(User::getLastName), () -> faker.name().lastName())
-                .supply(Select.field(User::getPassword), () -> faker.internet().password(3, 12))
+                .supply(Select.field(User::getPasswordDigest), () -> faker.internet().password(3, 12))
                 .create();
     }
 
@@ -58,7 +59,7 @@ public class UsersControllerTest {
         var testUser = generateUser();
         userRepository.save(testUser);
 
-        var request = get("/api/users/{id}", testUser.getId());
+        var request = get("/api/users/{id}", testUser.getId()).with(jwt());
         var result = mockMvc.perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
@@ -79,9 +80,19 @@ public class UsersControllerTest {
         Long id = 100L;
         userRepository.deleteById(id);
 
-        var request = get("/api/users/{id}", id);
+        var request = get("/api/users/{id}", id).with(jwt());
         mockMvc.perform(request)
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testShowWithoutAuth() throws Exception {
+        var testUser = generateUser();
+        userRepository.save(testUser);
+
+        var request = get("/api/users/{id}", testUser.getId());
+        mockMvc.perform(request)
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -89,7 +100,7 @@ public class UsersControllerTest {
         var testUser = generateUser();
         userRepository.save(testUser);
 
-        var request = get("/api/users");
+        var request = get("/api/users").with(jwt());
         var result = mockMvc.perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
@@ -99,12 +110,22 @@ public class UsersControllerTest {
     }
 
     @Test
+    public void testIndexWithoutAuth() throws Exception {
+        var testUser = generateUser();
+        userRepository.save(testUser);
+
+        var request = get("/api/users");
+        mockMvc.perform(request)
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     public void testCreate() throws Exception {
         var data = Map.of(
                 "email", faker.internet().emailAddress(),
                 "firstName", faker.name().firstName(),
                 "lastName", faker.name().lastName(),
-                "password", faker.internet().password(3, 12)
+                "passwordDigest", faker.internet().password(3, 12)
         );
 
 
@@ -121,14 +142,14 @@ public class UsersControllerTest {
         assertThat(user.getEmail()).isEqualTo(data.get("email"));
         assertThat(user.getFirstName()).isEqualTo(data.get("firstName"));
         assertThat(user.getLastName()).isEqualTo(data.get("lastName"));
-        assertThat(user.getPassword()).isEqualTo(data.get("password"));
+        assertThat(user.getPasswordDigest()).isNotEqualTo(data.get("passwordDigest"));
     }
 
     @Test
     public void testCreateWithoutFirstNameAndLastName() throws Exception {
         var dataWithoutFirstNameAndLastName = Map.of(
                 "email", faker.internet().emailAddress(),
-                "password", faker.internet().password(3, 12)
+                "passwordDigest", faker.internet().password(3, 12)
         );
 
         var request = post("/api/users")
@@ -142,7 +163,7 @@ public class UsersControllerTest {
 
         assertThat(user).isNotNull();
         assertThat(user.getEmail()).isEqualTo(dataWithoutFirstNameAndLastName.get("email"));
-        assertThat(user.getPassword()).isEqualTo(dataWithoutFirstNameAndLastName.get("password"));
+        assertThat(user.getPasswordDigest()).isNotEqualTo(dataWithoutFirstNameAndLastName.get("passwordDigest"));
     }
 
     @Test
@@ -151,7 +172,7 @@ public class UsersControllerTest {
                 "email", faker.internet().emailAddress(),
                 "firstName", faker.name().firstName(),
                 "lastName", faker.name().lastName(),
-                "password", faker.internet().password(1, 2)
+                "passwordDigest", faker.internet().password(1, 2)
         );
 
         var request = post("/api/users")
@@ -168,7 +189,7 @@ public class UsersControllerTest {
                 "email", faker.name().username(),
                 "firstName", faker.name().firstName(),
                 "lastName", faker.name().lastName(),
-                "password", faker.internet().password(3, 12)
+                "passwordDigest", faker.internet().password(3, 12)
         );
 
         var request = post("/api/users")
@@ -188,10 +209,10 @@ public class UsersControllerTest {
                 "email", faker.internet().emailAddress(),
                 "firstName", faker.name().firstName(),
                 "lastName", faker.name().lastName(),
-                "password", faker.internet().password(3, 12)
+                "passwordDigest", faker.internet().password(3, 12)
         );
 
-        var request = put("/api/users/" + testUser.getId())
+        var request = put("/api/users/" + testUser.getId()).with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
@@ -204,7 +225,7 @@ public class UsersControllerTest {
         assertThat(updatedUser.getEmail()).isEqualTo(data.get("email"));
         assertThat(updatedUser.getFirstName()).isEqualTo(data.get("firstName"));
         assertThat(updatedUser.getLastName()).isEqualTo(data.get("lastName"));
-        assertThat(updatedUser.getPassword()).isEqualTo(data.get("password"));
+        assertThat(updatedUser.getPasswordDigest()).isNotEqualTo(data.get("passwordDigest"));
     }
 
     @Test
@@ -217,7 +238,7 @@ public class UsersControllerTest {
                 "lastName", faker.name().lastName()
         );
 
-        var request = put("/api/users/" + testUser.getId())
+        var request = put("/api/users/" + testUser.getId()).with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
@@ -235,15 +256,45 @@ public class UsersControllerTest {
     }
 
     @Test
-    public void testDeleteUser() throws Exception {
+    public void testUpdateWithoutAuth() throws Exception {
         var testUser = generateUser();
         userRepository.save(testUser);
 
-        var request = delete("/api/users/{id}", testUser.getId());
+        var data = Map.of(
+                "email", faker.internet().emailAddress(),
+                "firstName", faker.name().firstName(),
+                "lastName", faker.name().lastName(),
+                "passwordDigest", faker.internet().password(3, 12)
+        );
+
+        var request = put("/api/users/" + testUser.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(om.writeValueAsString(data));
+
+        mockMvc.perform(request)
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void testDestroy() throws Exception {
+        var testUser = generateUser();
+        userRepository.save(testUser);
+
+        var request = delete("/api/users/{id}", testUser.getId()).with(jwt());
         mockMvc.perform(request)
                 .andExpect(status().isNoContent());
 
         testUser = userRepository.findById(testUser.getId()).orElse(null);
         assertThat(testUser).isNull();
+    }
+
+    @Test
+    public void testDestroyWithoutAuth() throws Exception {
+        var testUser = generateUser();
+        userRepository.save(testUser);
+
+        var request = delete("/api/users/{id}", testUser.getId());
+        mockMvc.perform(request)
+                .andExpect(status().isUnauthorized());
     }
 }
