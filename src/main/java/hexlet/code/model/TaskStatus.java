@@ -18,7 +18,6 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 
 @Entity
 @Table(name = "task_statuses")
-
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter

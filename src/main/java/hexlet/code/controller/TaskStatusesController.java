@@ -1,10 +1,12 @@
 package hexlet.code.controller;
 
-import hexlet.code.dto.TaskStatusCreateDTO;
-import hexlet.code.dto.TaskStatusDTO;
-import hexlet.code.dto.TaskStatusUpdateDTO;
+import hexlet.code.dto.taskstatus.TaskStatusCreateDTO;
+import hexlet.code.dto.taskstatus.TaskStatusDTO;
+import hexlet.code.dto.taskstatus.TaskStatusUpdateDTO;
+import hexlet.code.exception.MethodNotAllowedException;
 import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.mapper.TaskStatusMapper;
+import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -21,8 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+import static hexlet.code.controller.TaskStatusesController.TASK_STATUSES_CONTROLLER_PATH;
+
 @RestController
-@RequestMapping("${base-url}" + TaskStatusesController.TASK_STATUSES_CONTROLLER_PATH)
+@RequestMapping("${base-url}" + TASK_STATUSES_CONTROLLER_PATH)
 @AllArgsConstructor
 public class TaskStatusesController {
 
@@ -31,6 +35,8 @@ public class TaskStatusesController {
     public static final String ID = "/{id}";
 
     private final TaskStatusRepository taskStatusRepository;
+
+    private final TaskRepository taskRepository;
 
     private final TaskStatusMapper taskStatusMapper;
 
@@ -75,6 +81,13 @@ public class TaskStatusesController {
     @DeleteMapping(ID)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void destroy(@PathVariable Long id) {
-        taskStatusRepository.deleteById(id);
+        var taskStatus = taskStatusRepository.findById(id).get();
+        var task = taskRepository.findByTaskStatus(taskStatus);
+
+        if (task.isEmpty()) {
+            taskStatusRepository.deleteById(id);
+        } else {
+            throw new MethodNotAllowedException("Operation not possible");
+        }
     }
 }

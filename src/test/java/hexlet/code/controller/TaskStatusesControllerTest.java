@@ -1,9 +1,12 @@
 package hexlet.code.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hexlet.code.mapper.TaskStatusMapper;
+import hexlet.code.model.Task;
 import hexlet.code.model.TaskStatus;
+import hexlet.code.model.User;
+import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
+import hexlet.code.repository.UserRepository;
 import net.datafaker.Faker;
 import org.instancio.Instancio;
 import org.instancio.Select;
@@ -42,7 +45,25 @@ public class TaskStatusesControllerTest {
     private TaskStatusRepository taskStatusRepository;
 
     @Autowired
-    private TaskStatusMapper taskStatusMapper;
+    private UserRepository userRepository;
+
+    @Autowired
+    private TaskRepository taskRepository;
+
+    private Task generateTask() {
+        var user = userRepository.findById(1L).get();
+        var taskStatus = taskStatusRepository.findBySlug("draft").get();
+        return Instancio.of(Task.class)
+                .ignore(Select.field(User::getId))
+                .supply(Select.field(Task::getIndex), () -> (Integer) faker.number().positive())
+                .supply(Select.field(Task::getAuthor), () -> user)
+                .supply(Select.field(Task::getTitle), () -> faker.lorem().word())
+                .supply(Select.field(Task::getContent), () -> faker.lorem().sentence())
+                .supply(Select.field(Task::getTaskStatus), () -> taskStatus)
+                .supply(Select.field(Task::getAssignee), () -> user)
+                .create();
+
+    }
 
     private TaskStatus generateTaskStatus() {
         String word = faker.lorem().word();
@@ -59,7 +80,7 @@ public class TaskStatusesControllerTest {
         var testTaskStatus = generateTaskStatus();
         taskStatusRepository.save(testTaskStatus);
 
-        var request = get("/api/task_statuses/{id}", testTaskStatus.getId());
+        var request = get("/api/task_statuses/{id}", testTaskStatus.getId()).with(jwt());
         var result = mockMvc.perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
@@ -77,9 +98,19 @@ public class TaskStatusesControllerTest {
         Long id = 100L;
         taskStatusRepository.deleteById(id);
 
-        var request = get("/api/task_statuses/{id}", id);
+        var request = get("/api/task_statuses/{id}", id).with(jwt());
         mockMvc.perform(request)
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testShowWithoutAuth() throws Exception {
+        var testTaskStatus = generateTaskStatus();
+        taskStatusRepository.save(testTaskStatus);
+
+        var request = get("/api/task_statuses/{id}", testTaskStatus.getId());
+        mockMvc.perform(request)
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -87,13 +118,23 @@ public class TaskStatusesControllerTest {
         var testTaskStatus = generateTaskStatus();
         taskStatusRepository.save(testTaskStatus);
 
-        var request = get("/api/task_statuses");
+        var request = get("/api/task_statuses").with(jwt());
         var result = mockMvc.perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
 
         var body = result.getResponse().getContentAsString();
         assertThatJson(body).isArray();
+    }
+
+    @Test
+    public void testIndexWithoutAuth() throws Exception {
+        var testTaskStatus = generateTaskStatus();
+        taskStatusRepository.save(testTaskStatus);
+
+        var request = get("/api/task_statuses");
+        mockMvc.perform(request)
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -254,5 +295,20 @@ public class TaskStatusesControllerTest {
         var request = delete("/api/task_statuses/{id}", testTaskStatus.getId());
         mockMvc.perform(request)
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void testDestroyStatusHasTask() throws Exception {
+        var testTask = generateTask();
+        taskRepository.save(testTask);
+
+        String email = "hexlet@example.com";
+        var token = jwt().jwt(builder -> builder.subject(email));
+        String slug = "draft";
+        var taskStatus = taskStatusRepository.findBySlug(slug).get();
+
+        var request = delete("/api/task_statuses/{id}", taskStatus.getId()).with(token);
+        mockMvc.perform(request)
+                .andExpect(status().isMethodNotAllowed());
     }
 }

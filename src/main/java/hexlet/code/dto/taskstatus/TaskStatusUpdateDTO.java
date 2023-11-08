@@ -1,4 +1,4 @@
-package hexlet.code.dto;
+package hexlet.code.dto.taskstatus;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -14,6 +14,4 @@ public class TaskStatusUpdateDTO {
 
     @NotBlank
     private JsonNullable<String> slug;
-
-    private JsonNullable<Long> taskId;
 }

@@ -1,7 +1,7 @@
 package hexlet.code.component;
 
-import hexlet.code.dto.TaskStatusCreateDTO;
-import hexlet.code.dto.UserCreateDTO;
+import hexlet.code.dto.taskstatus.TaskStatusCreateDTO;
+import hexlet.code.dto.user.UserCreateDTO;
 import hexlet.code.mapper.TaskStatusMapper;
 import hexlet.code.mapper.UserMapper;
 import hexlet.code.repository.TaskStatusRepository;
@@ -49,7 +49,7 @@ public class DataInitializer implements ApplicationRunner {
         );
 
         defaultSlugs.forEach(slug -> {
-                    var taskStatusData = new TaskStatusCreateDTO();
+                    var statusData = new TaskStatusCreateDTO();
                     String[] arr = slug.split("_");
                     String first = arr[0].substring(0, 1).toUpperCase() + arr[0].substring(1);
                     var name = new StringBuilder(first);
@@ -60,10 +60,10 @@ public class DataInitializer implements ApplicationRunner {
                         }
                     }
 
-                    taskStatusData.setName(name.toString());
-                    taskStatusData.setSlug(slug);
-                    var taskStatus = taskStatusMapper.map(taskStatusData);
-                    taskStatusRepository.save(taskStatus);
+                    statusData.setName(name.toString());
+                    statusData.setSlug(slug);
+                    var status = taskStatusMapper.map(statusData);
+                    taskStatusRepository.save(status);
                 });
     }
 }

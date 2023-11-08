@@ -1,8 +1,10 @@
 package hexlet.code.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hexlet.code.mapper.UserMapper;
+import hexlet.code.model.Task;
 import hexlet.code.model.User;
+import hexlet.code.repository.TaskRepository;
+import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
 import net.datafaker.Faker;
 import org.instancio.Instancio;
@@ -42,7 +44,25 @@ public class UsersControllerTest {
     private UserRepository userRepository;
 
     @Autowired
-    private UserMapper userMapper;
+    private TaskStatusRepository taskStatusRepository;
+
+    @Autowired
+    private TaskRepository taskRepository;
+
+    private Task generateTask() {
+        var user = userRepository.findById(1L).get();
+        var taskStatus = taskStatusRepository.findBySlug("draft").get();
+        return Instancio.of(Task.class)
+                .ignore(Select.field(User::getId))
+                .supply(Select.field(Task::getIndex), () -> (Integer) faker.number().positive())
+                .supply(Select.field(Task::getAuthor), () -> user)
+                .supply(Select.field(Task::getTitle), () -> faker.lorem().word())
+                .supply(Select.field(Task::getContent), () -> faker.lorem().sentence())
+                .supply(Select.field(Task::getTaskStatus), () -> taskStatus)
+                .supply(Select.field(Task::getAssignee), () -> user)
+                .create();
+
+    }
 
     private User generateUser() {
         return Instancio.of(User.class)
@@ -129,7 +149,7 @@ public class UsersControllerTest {
         );
 
 
-        var request = post("/api/users")
+        var request = post("/api/users").with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
@@ -146,13 +166,31 @@ public class UsersControllerTest {
     }
 
     @Test
+    public void testCreateWithoutAuth() throws Exception {
+        var data = Map.of(
+                "email", faker.internet().emailAddress(),
+                "firstName", faker.name().firstName(),
+                "lastName", faker.name().lastName(),
+                "passwordDigest", faker.internet().password(3, 12)
+        );
+
+
+        var request = post("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(om.writeValueAsString(data));
+
+        mockMvc.perform(request)
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     public void testCreateWithoutFirstNameAndLastName() throws Exception {
         var dataWithoutFirstNameAndLastName = Map.of(
                 "email", faker.internet().emailAddress(),
                 "passwordDigest", faker.internet().password(3, 12)
         );
 
-        var request = post("/api/users")
+        var request = post("/api/users").with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(dataWithoutFirstNameAndLastName));
 
@@ -175,7 +213,7 @@ public class UsersControllerTest {
                 "passwordDigest", faker.internet().password(1, 2)
         );
 
-        var request = post("/api/users")
+        var request = post("/api/users").with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(dataWithInvalidPassword));
 
@@ -192,7 +230,7 @@ public class UsersControllerTest {
                 "passwordDigest", faker.internet().password(3, 12)
         );
 
-        var request = post("/api/users")
+        var request = post("/api/users").with(jwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(dataWithInvalidEmail));
 
@@ -296,5 +334,19 @@ public class UsersControllerTest {
         var request = delete("/api/users/{id}", testUser.getId());
         mockMvc.perform(request)
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void testDestroyUserHasTask() throws Exception {
+        var testTask = generateTask();
+        taskRepository.save(testTask);
+
+        String email = "hexlet@example.com";
+        var token = jwt().jwt(builder -> builder.subject(email));
+
+        var user = userRepository.findByEmail(email).get();
+        var request = delete("/api/users/{id}", user.getId()).with(token);
+        mockMvc.perform(request)
+                .andExpect(status().isMethodNotAllowed());
     }
 }
