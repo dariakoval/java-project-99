@@ -13,4 +13,6 @@ public class TaskStatusCreateDTO {
 
     @NotBlank
     private String slug;
+
+    private Long taskId;
 }
