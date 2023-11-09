@@ -43,6 +43,7 @@ dependencies {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+	finalizedBy(tasks.jacocoTestReport)
 }
 
 checkstyle {
@@ -52,14 +53,5 @@ checkstyle {
 tasks.jacocoTestReport {
 	reports {
 		xml.required = true
-	}
-}
-
-tasks {
-	val stage by registering {
-		dependsOn(clean, installDist)
-	}
-	installDist {
-		mustRunAfter(clean)
 	}
 }
