@@ -6,6 +6,7 @@ import hexlet.code.dto.task.TaskUpdateDTO;
 import hexlet.code.exception.MethodNotAllowedException;
 import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.mapper.TaskMapper;
+import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static hexlet.code.controller.TasksController.TASK_CONTROLLER_PATH;
 @RestController
@@ -41,6 +43,8 @@ public class TasksController {
     private final UserRepository userRepository;
 
     private final TaskStatusRepository taskStatusRepository;
+
+    private final LabelRepository labelRepository;
 
     private final TaskMapper taskMapper;
 
@@ -73,13 +77,22 @@ public class TasksController {
     public TaskDTO create(@Valid @RequestBody TaskCreateDTO taskData) {
         var currentUser = userUtils.getCurrentUser();
         var task = taskMapper.map(taskData);
-        var userId = taskData.getAssigneeId();
-        var user = userRepository.findById(userId).orElse(null);
+
+        var assigneeId = taskData.getAssigneeId();
+        var assignee = userRepository.findById(assigneeId).get();
+
         var statusSlug = taskData.getStatus();
-        var taskStatus = taskStatusRepository.findBySlug(statusSlug).orElse(null);
+        var taskStatus = taskStatusRepository.findBySlug(statusSlug).get();
+
+        var labelsId = taskData.getLabelsId();
+        var labels = labelsId.stream()
+                        .map(i -> labelRepository.findById(i).get())
+                                .collect(Collectors.toSet());
+
         task.setAuthor(currentUser);
-        task.setAssignee(user);
+        task.setAssignee(assignee);
         task.setTaskStatus(taskStatus);
+        task.setLabels(labels);
         taskRepository.save(task);
         var taskDto = taskMapper.map(task);
         return taskDto;
@@ -92,23 +105,34 @@ public class TasksController {
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("Task with id %s not found", id)));
         var userId = taskData.getAssigneeId();
         var statusSlug = taskData.getStatus();
+        var labelsId = taskData.getLabelsId();
         taskMapper.update(taskData, task);
 
-        if (userId == null && statusSlug == null) {
+        if (userId == null && statusSlug == null && labelsId == null) {
             taskRepository.save(task);
-        } else if (userId == null) {
+        } else if (userId == null && labelsId == null) {
             var taskStatus = taskStatusRepository.findBySlug((statusSlug).get()).get();
             task.setTaskStatus(taskStatus);
             taskRepository.save(task);
-        } else if (statusSlug == null) {
+        } else if (statusSlug == null && labelsId == null) {
             var user =  userRepository.findById(userId.get()).get();
             task.setAssignee(user);
+            taskRepository.save(task);
+        } else if (userId == null && statusSlug == null) {
+            var labels = labelsId.get().stream()
+                    .map(l -> labelRepository.findById(l).get())
+                    .collect(Collectors.toSet());
+            task.setLabels(labels);
             taskRepository.save(task);
         } else {
             var user =  userRepository.findById(userId.get()).get();
             var taskStatus = taskStatusRepository.findBySlug((statusSlug).get()).get();
+            var labels = labelsId.get().stream()
+                    .map(l -> labelRepository.findById(l).get())
+                    .collect(Collectors.toSet());
             task.setAssignee(user);
             task.setTaskStatus(taskStatus);
+            task.setLabels(labels);
             taskRepository.save(task);
         }
 

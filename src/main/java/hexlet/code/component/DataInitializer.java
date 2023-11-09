@@ -1,9 +1,12 @@
 package hexlet.code.component;
 
+import hexlet.code.dto.label.LabelCreateDTO;
 import hexlet.code.dto.taskstatus.TaskStatusCreateDTO;
 import hexlet.code.dto.user.UserCreateDTO;
+import hexlet.code.mapper.LabelMapper;
 import hexlet.code.mapper.TaskStatusMapper;
 import hexlet.code.mapper.UserMapper;
+import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
 import lombok.AllArgsConstructor;
@@ -13,6 +16,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -34,6 +38,12 @@ public class DataInitializer implements ApplicationRunner {
     @Autowired
     private final TaskStatusMapper taskStatusMapper;
 
+    @Autowired
+    private final LabelRepository labelRepository;
+
+    @Autowired
+    private final LabelMapper labelMapper;
+
     @Override
     public void run(ApplicationArguments args) throws Exception {
         var userData = new UserCreateDTO();
@@ -44,26 +54,31 @@ public class DataInitializer implements ApplicationRunner {
         user.setPasswordDigest(hashedPassword);
         userRepository.save(user);
 
-        List<String> defaultSlugs = List.of(
-                "draft", "to_review", "to_be_fixed", "to_publish", "published"
-        );
-
+        List<String> defaultSlugs = List.of("draft", "to_review", "to_be_fixed", "to_publish", "published");
         defaultSlugs.forEach(slug -> {
-                    var statusData = new TaskStatusCreateDTO();
-                    String[] arr = slug.split("_");
-                    String first = arr[0].substring(0, 1).toUpperCase() + arr[0].substring(1);
-                    var name = new StringBuilder(first);
+            var statusData = new TaskStatusCreateDTO();
+            String[] arr = slug.split("_");
+            String first = arr[0].substring(0, 1).toUpperCase() + arr[0].substring(1);
+            var name = new StringBuilder(first);
 
-                    if (arr.length > 1) {
-                        for (int i = 1; i < arr.length; i++) {
+            if (arr.length > 1) {
+                for (int i = 1; i < arr.length; i++) {
                             name.append(" ").append(arr[i]);
-                        }
-                    }
+                }
+            }
 
-                    statusData.setName(name.toString());
-                    statusData.setSlug(slug);
-                    var status = taskStatusMapper.map(statusData);
-                    taskStatusRepository.save(status);
-                });
+            statusData.setName(name.toString());
+            statusData.setSlug(slug);
+            var status = taskStatusMapper.map(statusData);
+            taskStatusRepository.save(status);
+        });
+
+        List<String> defaultLabels = List.of("feature", "bug");
+        defaultLabels.forEach(name -> {
+             var labelData = new LabelCreateDTO();
+             labelData.setName(name);
+             var label = labelMapper.map(labelData);
+             labelRepository.save(label);
+        });
     }
 }

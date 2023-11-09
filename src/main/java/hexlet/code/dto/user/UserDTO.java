@@ -14,4 +14,5 @@ public class UserDTO {
     private String lastName;
     private Date createdAt;
     private Date updatedAt;
+    private String passwordDigest;
 }
