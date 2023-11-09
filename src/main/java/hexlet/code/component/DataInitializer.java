@@ -16,7 +16,6 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -48,7 +47,7 @@ public class DataInitializer implements ApplicationRunner {
     public void run(ApplicationArguments args) throws Exception {
         var userData = new UserCreateDTO();
         userData.setEmail("hexlet@example.com");
-        userData.setPasswordDigest("qwerty");
+        userData.setPassword("qwerty");
         var user = userMapper.map(userData);
         var hashedPassword = passwordEncoder.encode(user.getPassword());
         user.setPasswordDigest(hashedPassword);

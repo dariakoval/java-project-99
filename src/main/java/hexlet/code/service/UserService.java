@@ -54,7 +54,7 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("User with id %s not found", id)));
         userMapper.update(userData, user);
 
-        if (userData.getPasswordDigest() == null) {
+        if (userData.getPassword() == null) {
             userRepository.save(user);
         } else {
             String hashedPassword = passwordEncoder.encode(user.getPassword());

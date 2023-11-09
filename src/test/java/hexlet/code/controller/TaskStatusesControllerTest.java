@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.model.Task;
 import hexlet.code.model.TaskStatus;
 import hexlet.code.model.User;
+import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
@@ -17,6 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
 import java.util.Map;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -50,17 +52,22 @@ public class TaskStatusesControllerTest {
     @Autowired
     private TaskRepository taskRepository;
 
+    @Autowired
+    private LabelRepository labelRepository;
+
     private Task generateTask() {
         var user = userRepository.findById(1L).get();
         var taskStatus = taskStatusRepository.findBySlug("draft").get();
+        var label = labelRepository.findByName("feature").get();
         return Instancio.of(Task.class)
-                .ignore(Select.field(User::getId))
+                .ignore(Select.field(Task::getId))
                 .supply(Select.field(Task::getIndex), () -> (Integer) faker.number().positive())
                 .supply(Select.field(Task::getAuthor), () -> user)
                 .supply(Select.field(Task::getTitle), () -> faker.lorem().word())
                 .supply(Select.field(Task::getContent), () -> faker.lorem().sentence())
                 .supply(Select.field(Task::getTaskStatus), () -> taskStatus)
                 .supply(Select.field(Task::getAssignee), () -> user)
+                .supply(Select.field(Task::getLabels), () -> List.of(label))
                 .create();
 
     }

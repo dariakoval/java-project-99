@@ -3,16 +3,15 @@ package hexlet.code.mapper;
 import hexlet.code.dto.task.TaskCreateDTO;
 import hexlet.code.dto.task.TaskDTO;
 import hexlet.code.dto.task.TaskUpdateDTO;
-import hexlet.code.model.Label;
 import hexlet.code.model.Task;
+import hexlet.code.repository.LabelRepository;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
-
-import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Mapper(
         uses = { JsonNullableMapper.class, ReferenceMapper.class },
@@ -22,14 +21,21 @@ import java.util.List;
 )
 public abstract class TaskMapper {
 
-    @Mapping(target = "assignee.id", source = "assigneeId")
+    @Autowired
+    public LabelRepository labelRepository;
+
+
+    @Mapping(target = "assignee.id", source = "assignee_id")
     @Mapping(target = "taskStatus.name", source = "status")
-//    @Mapping(target = "labels.id", source = "labelsId")
+    @Mapping(
+            target = "labels",
+            expression = "java(dto.getTaskLabelIds().stream().map(i -> labelRepository.findById(i).get()).toList())"
+    )
     public abstract Task map(TaskCreateDTO dto);
 
-    @Mapping(source = "assignee.id", target = "assigneeId")
+    @Mapping(source = "assignee.id", target = "assignee_id")
     @Mapping(source = "taskStatus.name", target = "status")
-//    @Mapping(source = "labels.id", target = "labelsId")
+    @Mapping(target = "taskLabelIds", expression = "java(model.getLabels().stream().map(i -> i.getId()).toList())")
     public abstract TaskDTO map(Task model);
 
     public abstract void update(TaskUpdateDTO dto, @MappingTarget Task model);

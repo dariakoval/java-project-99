@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Set;
+import java.util.List;
 
 @Getter
 @Setter
@@ -13,7 +13,7 @@ public class TaskCreateDTO {
 
     private Integer index;
 
-    private Long assigneeId;
+    private Long assignee_id;
 
     @NotBlank
     private String title;
@@ -23,5 +23,5 @@ public class TaskCreateDTO {
     @NotNull
     private String status;
 
-    private Set<Long> labelsId;
+    private List<Long> taskLabelIds;
 }

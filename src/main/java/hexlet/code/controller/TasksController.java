@@ -25,8 +25,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static hexlet.code.controller.TasksController.TASK_CONTROLLER_PATH;
 @RestController
@@ -78,21 +78,26 @@ public class TasksController {
         var currentUser = userUtils.getCurrentUser();
         var task = taskMapper.map(taskData);
 
-        var assigneeId = taskData.getAssigneeId();
+        var assigneeId = taskData.getAssignee_id();
         var assignee = userRepository.findById(assigneeId).get();
 
         var statusSlug = taskData.getStatus();
         var taskStatus = taskStatusRepository.findBySlug(statusSlug).get();
 
-        var labelsId = taskData.getLabelsId();
-        var labels = labelsId.stream()
-                        .map(i -> labelRepository.findById(i).get())
-                                .collect(Collectors.toSet());
+        var labelsId = taskData.getTaskLabelIds();
+        if (labelsId != null) {
+            var labels = labelsId.stream()
+                    .map(i -> labelRepository.findById(i).get())
+                    .toList();
+            task.setLabels(labels);
+        } else {
+            task.setLabels(new ArrayList<>());
+        }
 
         task.setAuthor(currentUser);
         task.setAssignee(assignee);
         task.setTaskStatus(taskStatus);
-        task.setLabels(labels);
+
         taskRepository.save(task);
         var taskDto = taskMapper.map(task);
         return taskDto;
@@ -103,9 +108,9 @@ public class TasksController {
     public TaskDTO update(@RequestBody @Valid TaskUpdateDTO taskData, @PathVariable Long id) {
         var task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("Task with id %s not found", id)));
-        var userId = taskData.getAssigneeId();
+        var userId = taskData.getAssignee_id();
         var statusSlug = taskData.getStatus();
-        var labelsId = taskData.getLabelsId();
+        var labelsId = taskData.getTaskLabelIds();
         taskMapper.update(taskData, task);
 
         if (userId == null && statusSlug == null && labelsId == null) {
@@ -121,7 +126,7 @@ public class TasksController {
         } else if (userId == null && statusSlug == null) {
             var labels = labelsId.get().stream()
                     .map(l -> labelRepository.findById(l).get())
-                    .collect(Collectors.toSet());
+                    .toList();
             task.setLabels(labels);
             taskRepository.save(task);
         } else {
@@ -129,7 +134,7 @@ public class TasksController {
             var taskStatus = taskStatusRepository.findBySlug((statusSlug).get()).get();
             var labels = labelsId.get().stream()
                     .map(l -> labelRepository.findById(l).get())
-                    .collect(Collectors.toSet());
+                    .toList();
             task.setAssignee(user);
             task.setTaskStatus(taskStatus);
             task.setLabels(labels);

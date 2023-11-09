@@ -3,6 +3,7 @@ package hexlet.code.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.model.Task;
 import hexlet.code.model.User;
+import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
@@ -16,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
 import java.util.Map;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -49,17 +51,22 @@ public class UsersControllerTest {
     @Autowired
     private TaskRepository taskRepository;
 
+    @Autowired
+    private LabelRepository labelRepository;
+
     private Task generateTask() {
         var user = userRepository.findById(1L).get();
         var taskStatus = taskStatusRepository.findBySlug("draft").get();
+        var label = labelRepository.findByName("feature").get();
         return Instancio.of(Task.class)
-                .ignore(Select.field(User::getId))
+                .ignore(Select.field(Task::getId))
                 .supply(Select.field(Task::getIndex), () -> (Integer) faker.number().positive())
                 .supply(Select.field(Task::getAuthor), () -> user)
                 .supply(Select.field(Task::getTitle), () -> faker.lorem().word())
                 .supply(Select.field(Task::getContent), () -> faker.lorem().sentence())
                 .supply(Select.field(Task::getTaskStatus), () -> taskStatus)
                 .supply(Select.field(Task::getAssignee), () -> user)
+                .supply(Select.field(Task::getLabels), () -> List.of(label))
                 .create();
 
     }
@@ -145,7 +152,7 @@ public class UsersControllerTest {
                 "email", faker.internet().emailAddress(),
                 "firstName", faker.name().firstName(),
                 "lastName", faker.name().lastName(),
-                "passwordDigest", faker.internet().password(3, 12)
+                "password", faker.internet().password(3, 12)
         );
 
 
@@ -162,7 +169,7 @@ public class UsersControllerTest {
         assertThat(user.getEmail()).isEqualTo(data.get("email"));
         assertThat(user.getFirstName()).isEqualTo(data.get("firstName"));
         assertThat(user.getLastName()).isEqualTo(data.get("lastName"));
-        assertThat(user.getPasswordDigest()).isNotEqualTo(data.get("passwordDigest"));
+        assertThat(user.getPasswordDigest()).isNotEqualTo(data.get("password"));
     }
 
     @Test
@@ -171,7 +178,7 @@ public class UsersControllerTest {
                 "email", faker.internet().emailAddress(),
                 "firstName", faker.name().firstName(),
                 "lastName", faker.name().lastName(),
-                "passwordDigest", faker.internet().password(3, 12)
+                "password", faker.internet().password(3, 12)
         );
 
 
@@ -187,7 +194,7 @@ public class UsersControllerTest {
     public void testCreateWithoutFirstNameAndLastName() throws Exception {
         var dataWithoutFirstNameAndLastName = Map.of(
                 "email", faker.internet().emailAddress(),
-                "passwordDigest", faker.internet().password(3, 12)
+                "password", faker.internet().password(3, 12)
         );
 
         var request = post("/api/users").with(jwt())
@@ -201,7 +208,7 @@ public class UsersControllerTest {
 
         assertThat(user).isNotNull();
         assertThat(user.getEmail()).isEqualTo(dataWithoutFirstNameAndLastName.get("email"));
-        assertThat(user.getPasswordDigest()).isNotEqualTo(dataWithoutFirstNameAndLastName.get("passwordDigest"));
+        assertThat(user.getPasswordDigest()).isNotEqualTo(dataWithoutFirstNameAndLastName.get("password"));
     }
 
     @Test
@@ -210,7 +217,7 @@ public class UsersControllerTest {
                 "email", faker.internet().emailAddress(),
                 "firstName", faker.name().firstName(),
                 "lastName", faker.name().lastName(),
-                "passwordDigest", faker.internet().password(1, 2)
+                "password", faker.internet().password(1, 2)
         );
 
         var request = post("/api/users").with(jwt())
@@ -227,7 +234,7 @@ public class UsersControllerTest {
                 "email", faker.name().username(),
                 "firstName", faker.name().firstName(),
                 "lastName", faker.name().lastName(),
-                "passwordDigest", faker.internet().password(3, 12)
+                "password", faker.internet().password(3, 12)
         );
 
         var request = post("/api/users").with(jwt())
@@ -247,7 +254,7 @@ public class UsersControllerTest {
                 "email", faker.internet().emailAddress(),
                 "firstName", faker.name().firstName(),
                 "lastName", faker.name().lastName(),
-                "passwordDigest", faker.internet().password(3, 12)
+                "password", faker.internet().password(3, 12)
         );
 
         var request = put("/api/users/{id}", testUser.getId()).with(jwt())
@@ -263,7 +270,7 @@ public class UsersControllerTest {
         assertThat(updatedUser.getEmail()).isEqualTo(data.get("email"));
         assertThat(updatedUser.getFirstName()).isEqualTo(data.get("firstName"));
         assertThat(updatedUser.getLastName()).isEqualTo(data.get("lastName"));
-        assertThat(updatedUser.getPasswordDigest()).isNotEqualTo(data.get("passwordDigest"));
+        assertThat(updatedUser.getPasswordDigest()).isNotEqualTo(data.get("password"));
     }
 
     @Test
