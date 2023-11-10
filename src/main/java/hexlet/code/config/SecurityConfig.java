@@ -39,6 +39,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(mvcMatcherBuilder.pattern("/welcome")).permitAll()
+                        .requestMatchers(mvcMatcherBuilder.pattern("/swagger-ui/**")).permitAll()
+                        .requestMatchers(mvcMatcherBuilder.pattern("/v3/api-docs/**")).permitAll()
                         .requestMatchers(mvcMatcherBuilder.pattern("/api/login")).permitAll()
                         .requestMatchers(mvcMatcherBuilder.pattern("/")).permitAll()
                         .requestMatchers(mvcMatcherBuilder.pattern("/index.html")).permitAll()
