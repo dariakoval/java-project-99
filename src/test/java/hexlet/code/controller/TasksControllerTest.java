@@ -125,7 +125,7 @@ public class TasksControllerTest {
     }
 
     @Test
-    public void testIndex() throws Exception {
+    public void testIndexWithoutFilterParams() throws Exception {
         var testTask = generateTask();
         taskRepository.save(testTask);
 
@@ -136,6 +136,72 @@ public class TasksControllerTest {
 
         var body = result.getResponse().getContentAsString();
         assertThatJson(body).isArray();
+    }
+
+    @Test
+    public void testIndexFilterWithTitleCont() throws Exception {
+        var testTask = generateTask();
+        taskRepository.save(testTask);
+        var titleCont = testTask.getTitle();
+
+        var request = get("/api/tasks?titleCont=" + titleCont).with(jwt());
+        var result = mockMvc.perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        var body = result.getResponse().getContentAsString();
+        assertThatJson(body).isArray();
+        assertThat(body).contains(titleCont);
+    }
+
+    @Test
+    public void testIndexFilterWithAssigneeId() throws Exception {
+        var testTask = generateTask();
+        taskRepository.save(testTask);
+        var assigneeId = testTask.getAssignee().getId();
+
+        var request = get("/api/tasks?assigneeId=" + assigneeId).with(jwt());
+        var result = mockMvc.perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        var body = result.getResponse().getContentAsString();
+        assertThatJson(body).isArray();
+        assertThat(body).contains(String.valueOf(assigneeId));
+    }
+
+    @Test
+    public void testIndexFilterWithStatus() throws Exception {
+        var testTask = generateTask();
+        taskRepository.save(testTask);
+        var status = testTask.getTaskStatus().getSlug();
+        var statusName = testTask.getTaskStatus().getName();
+
+        var request = get("/api/tasks?status=" + status).with(jwt());
+        var result = mockMvc.perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        var body = result.getResponse().getContentAsString();
+        assertThatJson(body).isArray();
+        assertThat(body).contains(statusName);
+    }
+
+    @Test
+    public void testIndexFilterWithLabelId() throws Exception {
+        var testTask = generateTask();
+        taskRepository.save(testTask);
+        var label = testTask.getLabels().get(0);
+        var labelId = label.getId();
+
+        var request = get("/api/tasks?labelId=" + labelId).with(jwt());
+        var result = mockMvc.perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        var body = result.getResponse().getContentAsString();
+        assertThatJson(body).isArray();
+        assertThat(body).contains(String.valueOf(labelId));
     }
 
     @Test

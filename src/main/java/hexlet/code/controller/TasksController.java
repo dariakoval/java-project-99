@@ -2,15 +2,9 @@ package hexlet.code.controller;
 
 import hexlet.code.dto.task.TaskCreateDTO;
 import hexlet.code.dto.task.TaskDTO;
+import hexlet.code.dto.task.TaskParamsDTO;
 import hexlet.code.dto.task.TaskUpdateDTO;
-import hexlet.code.exception.MethodNotAllowedException;
-import hexlet.code.exception.ResourceNotFoundException;
-import hexlet.code.mapper.TaskMapper;
-import hexlet.code.repository.LabelRepository;
-import hexlet.code.repository.TaskRepository;
-import hexlet.code.repository.TaskStatusRepository;
-import hexlet.code.repository.UserRepository;
-import hexlet.code.util.UserUtils;
+import hexlet.code.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static hexlet.code.controller.TasksController.TASK_CONTROLLER_PATH;
@@ -38,125 +31,39 @@ public class TasksController {
 
     public static final String ID = "/{id}";
 
-    private final TaskRepository taskRepository;
-
-    private final UserRepository userRepository;
-
-    private final TaskStatusRepository taskStatusRepository;
-
-    private final LabelRepository labelRepository;
-
-    private final TaskMapper taskMapper;
-
-    private final UserUtils userUtils;
+    private final TaskService taskService;
 
     @GetMapping(ID)
     @ResponseStatus(HttpStatus.OK)
     public TaskDTO show(@PathVariable Long id) {
-        var task = taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(String.format("Task with id %s not found", id)));
-        var taskDto = taskMapper.map(task);
-        return taskDto;
+        return taskService.findById(id);
     }
 
     @GetMapping("")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<List<TaskDTO>> index() {
-        var tasks = taskRepository.findAll();
-        var tasksDto =  tasks.stream()
-                .map(taskMapper::map)
-                .toList();
+    public ResponseEntity<List<TaskDTO>> index(TaskParamsDTO params) {
+        var tasks = taskService.getAll(params);
 
         return ResponseEntity.ok()
-                .header("X-Total-Count", String.valueOf(tasksDto.size()))
-                .body(tasksDto);
+                .header("X-Total-Count", String.valueOf(tasks.size()))
+                .body(tasks);
     }
 
     @PostMapping("")
     @ResponseStatus(HttpStatus.CREATED)
     public TaskDTO create(@Valid @RequestBody TaskCreateDTO taskData) {
-        var currentUser = userUtils.getCurrentUser();
-        var task = taskMapper.map(taskData);
-
-        var assigneeId = taskData.getAssignee_id();
-        var assignee = userRepository.findById(assigneeId).get();
-
-        var statusSlug = taskData.getStatus();
-        var taskStatus = taskStatusRepository.findBySlug(statusSlug).get();
-
-        var labelsId = taskData.getTaskLabelIds();
-        if (labelsId != null) {
-            var labels = labelsId.stream()
-                    .map(i -> labelRepository.findById(i).get())
-                    .toList();
-            task.setLabels(labels);
-        } else {
-            task.setLabels(new ArrayList<>());
-        }
-
-        task.setAuthor(currentUser);
-        task.setAssignee(assignee);
-        task.setTaskStatus(taskStatus);
-
-        taskRepository.save(task);
-        var taskDto = taskMapper.map(task);
-        return taskDto;
+        return taskService.create(taskData);
     }
 
     @PutMapping(ID)
     @ResponseStatus(HttpStatus.OK)
     public TaskDTO update(@RequestBody @Valid TaskUpdateDTO taskData, @PathVariable Long id) {
-        var task = taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(String.format("Task with id %s not found", id)));
-        var userId = taskData.getAssignee_id();
-        var statusSlug = taskData.getStatus();
-        var labelsId = taskData.getTaskLabelIds();
-        taskMapper.update(taskData, task);
-
-        if (userId == null && statusSlug == null && labelsId == null) {
-            taskRepository.save(task);
-        } else if (userId == null && labelsId == null) {
-            var taskStatus = taskStatusRepository.findBySlug((statusSlug).get()).get();
-            task.setTaskStatus(taskStatus);
-            taskRepository.save(task);
-        } else if (statusSlug == null && labelsId == null) {
-            var user =  userRepository.findById(userId.get()).get();
-            task.setAssignee(user);
-            taskRepository.save(task);
-        } else if (userId == null && statusSlug == null) {
-            var labels = labelsId.get().stream()
-                    .map(l -> labelRepository.findById(l).get())
-                    .toList();
-            task.setLabels(labels);
-            taskRepository.save(task);
-        } else {
-            var user =  userRepository.findById(userId.get()).get();
-            var taskStatus = taskStatusRepository.findBySlug((statusSlug).get()).get();
-            var labels = labelsId.get().stream()
-                    .map(l -> labelRepository.findById(l).get())
-                    .toList();
-            task.setAssignee(user);
-            task.setTaskStatus(taskStatus);
-            task.setLabels(labels);
-            taskRepository.save(task);
-        }
-
-        var taskDto = taskMapper.map(task);
-        return taskDto;
+        return taskService.update(taskData, id);
     }
 
     @DeleteMapping(ID)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void destroy(@PathVariable Long id) {
-        var currentUser = userUtils.getCurrentUser();
-        var task = taskRepository.findById(id).get();
-        var author = task.getAuthor();
-
-        if (currentUser.equals(author)) {
-            taskRepository.deleteById(id);
-        } else {
-            throw new MethodNotAllowedException("Operation not possible");
-        }
-
+        taskService.delete(id);
     }
 }
