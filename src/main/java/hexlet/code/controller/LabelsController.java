@@ -3,7 +3,16 @@ package hexlet.code.controller;
 import hexlet.code.dto.label.LabelCreateDTO;
 import hexlet.code.dto.label.LabelDTO;
 import hexlet.code.dto.label.LabelUpdateDTO;
+import hexlet.code.model.Label;
 import hexlet.code.service.LabelService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +31,7 @@ import java.util.List;
 
 import static hexlet.code.controller.LabelsController.LABELS_CONTROLLER_PATH;
 
+@Tag(name = "Labels controller", description = "Manages task labels")
 @RestController
 @RequestMapping("${base-url}" + LABELS_CONTROLLER_PATH)
 @AllArgsConstructor
@@ -33,12 +43,27 @@ public class LabelsController {
 
     private final LabelService labelService;
 
+    @SecurityRequirement(name = "JWT")
+    @Operation(summary = "Get a label by its id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found the label",
+                    content = { @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = LabelDTO.class)) }),
+            @ApiResponse(responseCode = "404", description = "Label with that id not found",
+                    content = @Content) })
     @GetMapping(ID)
     @ResponseStatus(HttpStatus.OK)
-    public LabelDTO show(@PathVariable Long id) {
+    public LabelDTO show(
+            @Parameter(description = "Id of label to be searched")
+            @PathVariable Long id) {
         return labelService.findById(id);
     }
 
+    @SecurityRequirement(name = "JWT")
+    @Operation(summary = "Get list of all labels")
+    @ApiResponse(responseCode = "200", description = "List of all labels",
+            content = { @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = LabelDTO.class)) })
     @GetMapping("")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<LabelDTO>> index() {
@@ -48,21 +73,52 @@ public class LabelsController {
                 .body(labels);
     }
 
+    @SecurityRequirement(name = "JWT")
+    @Operation(summary = "Create new label")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Label created",
+                    content = { @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = LabelDTO.class)) }),
+            @ApiResponse(responseCode = "400", description = "Invalid label data supplied",
+                    content = @Content) })
     @PostMapping("")
     @ResponseStatus(HttpStatus.CREATED)
-    public LabelDTO create(@Valid @RequestBody final LabelCreateDTO labelData) {
+    public LabelDTO create(
+            @Parameter(description = "Label data to save")
+            @Valid @RequestBody final LabelCreateDTO labelData) {
         return labelService.create(labelData);
     }
 
+    @SecurityRequirement(name = "JWT")
+    @Operation(summary = "Update label by its id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Label updated",
+                    content = { @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = LabelDTO.class)) }),
+            @ApiResponse(responseCode = "400", description = "Invalid label data supplied",
+                    content = @Content),
+            @ApiResponse(responseCode = "404", description = "Label with that id not found") })
     @PutMapping(ID)
     @ResponseStatus(HttpStatus.OK)
-    public LabelDTO update(@RequestBody @Valid LabelUpdateDTO labelData, @PathVariable Long id) {
+    public LabelDTO update(
+            @Parameter(description = "Label data to update")
+            @RequestBody @Valid LabelUpdateDTO labelData,
+            @Parameter(description = "Id of label to be updated")
+            @PathVariable Long id) {
         return labelService.update(labelData, id);
     }
 
+    @SecurityRequirement(name = "JWT")
+    @Operation(summary = "Delete label by its id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Label deleted", content = @Content),
+            @ApiResponse(responseCode = "405", description = "Operation not possible", content = @Content)
+    })
     @DeleteMapping(ID)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void destroy(@PathVariable Long id) {
+    public void destroy(
+            @Parameter(description = "Id of label to be deleted")
+            @PathVariable Long id) {
         labelService.delete(id);
     }
 }
