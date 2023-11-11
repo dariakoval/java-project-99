@@ -57,3 +57,12 @@ tasks.jacocoTestReport {
 		xml.required = true
 	}
 }
+
+tasks {
+	val stage by registering {
+		dependsOn(clean, installDist)
+	}
+	installDist {
+		mustRunAfter(clean)
+	}
+}
