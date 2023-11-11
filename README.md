@@ -7,7 +7,7 @@
 
 [Demo on Render](https://task-manager-0bps.onrender.com/)
 
-[Interactive REST API documentation](http://localhost:8080/swagger-ui/index.html)
+[Interactive REST API documentation](https://task-manager-0bps.onrender.com/swagger-ui/index.html)
 
 ## Requirements
 
