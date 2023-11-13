@@ -72,12 +72,12 @@ public class TaskStatusesControllerTest {
     }
 
     private TaskStatus generateTaskStatus() {
-        String word = faker.lorem().word();
+        String word = faker.lorem().word().toLowerCase();
         return Instancio.of(TaskStatus.class)
                 .ignore(Select.field(TaskStatus::getId))
                 .supply(Select.field(TaskStatus::getName), () -> word.substring(0, 1).toUpperCase()
                         + word.substring(1))
-                .supply(Select.field(TaskStatus::getSlug), () -> word.toLowerCase())
+                .supply(Select.field(TaskStatus::getSlug), () -> word)
                 .create();
     }
 
@@ -145,10 +145,9 @@ public class TaskStatusesControllerTest {
 
     @Test
     public void testCreate() throws Exception {
-        String word = faker.lorem().word();
         var data = Map.of(
-                "name", word.substring(0, 1).toUpperCase() + word.substring(1),
-                "slug", word.toLowerCase()
+                "name", "New",
+                "slug", "new"
         );
 
         var request = post("/api/task_statuses").with(jwt())

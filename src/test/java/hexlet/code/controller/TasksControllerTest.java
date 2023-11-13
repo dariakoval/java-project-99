@@ -99,7 +99,7 @@ public class TasksControllerTest {
                 v -> v.node("title").isEqualTo(testTask.getTitle()),
                 v -> v.node("content").isEqualTo(testTask.getContent()),
                 v -> v.node("status").isEqualTo(testTask.getTaskStatus().getName()),
-                v -> v.node("assignee_id").isEqualTo(testTask.getAssignee().getId()),
+                v -> v.node("assigneeId").isEqualTo(testTask.getAssignee().getId()),
                 v -> v.node("taskLabelIds").isArray()
         );
     }
@@ -221,7 +221,7 @@ public class TasksControllerTest {
         var data = Map.of(
                 "index", (Integer) faker.number().positive(),
                 "assignee_id", 1L,
-                "title", faker.lorem().word(),
+                "title", "Some title",
                 "content", faker.lorem().sentence(),
                 "status", "draft",
                 "taskLabelIds", List.of(1L)
@@ -347,7 +347,7 @@ public class TasksControllerTest {
 
         var data = new TaskUpdateDTO();
         data.setIndex(JsonNullable.of(faker.number().positive()));
-        data.setAssignee_id(JsonNullable.of(testUser.getId()));
+        data.setAssigneeId(JsonNullable.of(testUser.getId()));
         data.setTitle(JsonNullable.of(faker.lorem().word()));
         data.setContent(JsonNullable.of(faker.lorem().sentence()));
         data.setStatus(JsonNullable.of("published"));
@@ -364,7 +364,7 @@ public class TasksControllerTest {
 
         assertThat(updatedTask).isNotNull();
         assertThat(updatedTask.getIndex()).isEqualTo(data.getIndex().get());
-        assertThat(updatedTask.getAssignee().getId()).isEqualTo(data.getAssignee_id().get());
+        assertThat(updatedTask.getAssignee().getId()).isEqualTo(data.getAssigneeId().get());
         assertThat(updatedTask.getTitle()).isEqualTo(data.getTitle().get());
         assertThat(updatedTask.getContent()).isEqualTo(data.getContent().get());
         assertThat(updatedTask.getTaskStatus().getSlug()).isEqualTo(data.getStatus().get());

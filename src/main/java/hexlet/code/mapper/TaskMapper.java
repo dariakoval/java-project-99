@@ -25,7 +25,7 @@ public abstract class TaskMapper {
     public LabelRepository labelRepository;
 
 
-    @Mapping(target = "assignee.id", source = "assignee_id")
+    @Mapping(target = "assignee.id", source = "assigneeId")
     @Mapping(target = "taskStatus.name", source = "status")
     @Mapping(
             target = "labels",
@@ -33,7 +33,7 @@ public abstract class TaskMapper {
     )
     public abstract Task map(TaskCreateDTO dto);
 
-    @Mapping(source = "assignee.id", target = "assignee_id")
+    @Mapping(source = "assignee.id", target = "assigneeId")
     @Mapping(source = "taskStatus.name", target = "status")
     @Mapping(target = "taskLabelIds", expression = "java(model.getLabels().stream().map(i -> i.getId()).toList())")
     public abstract TaskDTO map(Task model);

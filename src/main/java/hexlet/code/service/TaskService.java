@@ -55,7 +55,7 @@ public class TaskService {
         var currentUser = userUtils.getCurrentUser();
         var task = taskMapper.map(taskData);
 
-        var assigneeId = taskData.getAssignee_id();
+        var assigneeId = taskData.getAssigneeId();
         var assignee = userRepository.findById(assigneeId).get();
 
         var statusSlug = taskData.getStatus();
@@ -90,7 +90,7 @@ public class TaskService {
     public TaskDTO update(TaskUpdateDTO taskData, Long id) {
         var task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("Task with id %s not found", id)));
-        var userId = taskData.getAssignee_id();
+        var userId = taskData.getAssigneeId();
         var statusSlug = taskData.getStatus();
         var labelsId = taskData.getTaskLabelIds();
         taskMapper.update(taskData, task);
