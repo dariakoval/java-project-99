@@ -1,3 +1,8 @@
+# Task Manager
+Task Manager is a task management system. It allows you to set tasks, assign performers and change their statuses. To work with the system, registration and authentication are required.
+
+This is an educational project based on the Spring Framework.
+
 ## Tests and linter status
 
 [![Actions Status](https://github.com/dariakoval/java-project-99/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/dariakoval/java-project-99/actions)
@@ -15,6 +20,9 @@
 * Gradle 8.4
 * GNU Make
 
+## Technology stack
+Java, Gradle, Spring Boot, Spring Security, GNU Make, Docker, H2 (development), PostgreSQL (production), ORM, PaaS Render, Sentry, Swagger.
+
 ## Setup
 
 ```bash
@@ -26,4 +34,6 @@ make setup
 ```bash
 make start
 # Open http://localhost:8080
+# Username: hexlet@example.com
+# Password: qwerty
 ```
