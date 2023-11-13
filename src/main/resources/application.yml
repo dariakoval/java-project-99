@@ -17,3 +17,8 @@ server:
 rsa:
   private-key: classpath:certs/private.pem
   public-key: classpath:certs/public.pem
+
+sentry:
+  dsn: https://71cbd8b6021c4d33dee8e458c70405e5@o4506217640427520.ingest.sentry.io/4506217806299136
+  tracesSampleRate: 1.0
+  exception-resolver-order: -2147483647
