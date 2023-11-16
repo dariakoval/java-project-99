@@ -21,7 +21,7 @@ This is an educational project based on the Spring Framework.
 * GNU Make
 
 ## Technology stack
-Java, Gradle, Spring Boot, Spring Security, GNU Make, Docker, H2 (development), PostgreSQL (production), ORM, PaaS Render, Sentry, Swagger.
+Java, Gradle, Spring Boot, Spring Security, Spring Data JPA, GNU Make, Docker, H2 (development), PostgreSQL (production), ORM, PaaS Render, Sentry, Swagger.
 
 ## Setup
 
