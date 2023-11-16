@@ -1,4 +1,4 @@
-package hexlet.code.dto.task;
+package hexlet.code.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
