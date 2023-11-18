@@ -16,8 +16,8 @@ import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
@@ -53,8 +53,9 @@ public class Task implements BaseEntity {
     private User assignee;
 
     @ManyToMany(fetch = FetchType.EAGER)
+    @NotNull
     private List<Label> labels = new ArrayList<>();
 
     @CreatedDate
-    private Date createdAt;
+    private LocalDateTime createdAt;
 }

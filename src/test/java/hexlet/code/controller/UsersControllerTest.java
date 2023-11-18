@@ -1,22 +1,25 @@
 package hexlet.code.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hexlet.code.model.Task;
 import hexlet.code.model.User;
 import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
+import hexlet.code.util.ModelGenerator;
 import net.datafaker.Faker;
 import org.instancio.Instancio;
-import org.instancio.Select;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
@@ -43,6 +46,9 @@ public class UsersControllerTest {
     private ObjectMapper om;
 
     @Autowired
+    private ModelGenerator modelGenerator;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -54,39 +60,33 @@ public class UsersControllerTest {
     @Autowired
     private LabelRepository labelRepository;
 
-    private Task generateTask() {
-        var user = userRepository.findById(1L).get();
-        var taskStatus = taskStatusRepository.findBySlug("draft").get();
-        var label = labelRepository.findByName("feature").get();
-        return Instancio.of(Task.class)
-                .ignore(Select.field(Task::getId))
-                .supply(Select.field(Task::getIndex), () -> (Integer) faker.number().positive())
-                .supply(Select.field(Task::getAuthor), () -> user)
-                .supply(Select.field(Task::getTitle), () -> faker.lorem().word())
-                .supply(Select.field(Task::getContent), () -> faker.lorem().sentence())
-                .supply(Select.field(Task::getTaskStatus), () -> taskStatus)
-                .supply(Select.field(Task::getAssignee), () -> user)
-                .supply(Select.field(Task::getLabels), () -> List.of(label))
-                .create();
+    private SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor token;
 
+    private User testUser;
+
+    @BeforeEach
+    public void setUp() {
+        token = jwt().jwt(builder -> builder.subject("hexlet@example.com"));
+        testUser = Instancio.of(modelGenerator.getUserModel())
+                .create();
+        userRepository.save(testUser);
     }
 
-    private User generateUser() {
-        return Instancio.of(User.class)
-                .ignore(Select.field(User::getId))
-                .supply(Select.field(User::getEmail), () -> faker.internet().emailAddress())
-                .supply(Select.field(User::getFirstName), () -> faker.name().firstName())
-                .supply(Select.field(User::getLastName), () -> faker.name().lastName())
-                .supply(Select.field(User::getPasswordDigest), () -> faker.internet().password(3, 12))
-                .create();
+    @AfterEach
+    public void cleanUp() {
+        var userTasks = testUser.getTasks();
+
+        if (userTasks.isEmpty()) {
+            userRepository.deleteById(testUser.getId());
+        }
     }
 
     @Test
     public void testShow() throws Exception {
-        var testUser = generateUser();
-        userRepository.save(testUser);
+        var createdAt = java.util.Date.from(testUser.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant());
+        var updatedAt = java.util.Date.from(testUser.getUpdatedAt().atZone(ZoneId.systemDefault()).toInstant());
 
-        var request = get("/api/users/{id}", testUser.getId()).with(jwt());
+        var request = get("/api/users/{id}", testUser.getId()).with(token);
         var result = mockMvc.perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
@@ -96,9 +96,9 @@ public class UsersControllerTest {
                 v -> v.node("email").isEqualTo(testUser.getEmail()),
                 v -> v.node("firstName").isEqualTo(testUser.getFirstName()),
                 v -> v.node("lastName").isEqualTo(testUser.getLastName()),
-                v -> v.node("lastName").isEqualTo(testUser.getLastName()),
-                v -> v.node("createdAt").isEqualTo(testUser.getCreatedAt()),
-                v -> v.node("updatedAt").isEqualTo(testUser.getUpdatedAt())
+                v -> v.node("createdAt").isEqualTo(createdAt),
+                v -> v.node("updatedAt").isEqualTo(updatedAt),
+                v -> v.node("passwordDigest").isEqualTo(testUser.getPasswordDigest())
         );
     }
 
@@ -107,16 +107,13 @@ public class UsersControllerTest {
         Long id = 100L;
         userRepository.deleteById(id);
 
-        var request = get("/api/users/{id}", id).with(jwt());
+        var request = get("/api/users/{id}", id).with(token);
         mockMvc.perform(request)
                 .andExpect(status().isNotFound());
     }
 
     @Test
     public void testShowWithoutAuth() throws Exception {
-        var testUser = generateUser();
-        userRepository.save(testUser);
-
         var request = get("/api/users/{id}", testUser.getId());
         mockMvc.perform(request)
                 .andExpect(status().isUnauthorized());
@@ -124,23 +121,22 @@ public class UsersControllerTest {
 
     @Test
     public void testIndex() throws Exception {
-        var testUser = generateUser();
-        userRepository.save(testUser);
-
-        var request = get("/api/users").with(jwt());
+        var request = get("/api/users").with(token);
         var result = mockMvc.perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
 
         var body = result.getResponse().getContentAsString();
         assertThatJson(body).isArray();
+        assertThat(body).contains(String.valueOf(testUser.getId()));
+        assertThat(body).contains(testUser.getEmail());
+        assertThat(body).contains(testUser.getFirstName());
+        assertThat(body).contains(testUser.getLastName());
+        assertThat(body).contains(testUser.getPasswordDigest());
     }
 
     @Test
     public void testIndexWithoutAuth() throws Exception {
-        var testUser = generateUser();
-        userRepository.save(testUser);
-
         var request = get("/api/users");
         mockMvc.perform(request)
                 .andExpect(status().isUnauthorized());
@@ -156,7 +152,7 @@ public class UsersControllerTest {
         );
 
 
-        var request = post("/api/users").with(jwt())
+        var request = post("/api/users").with(token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
@@ -181,7 +177,6 @@ public class UsersControllerTest {
                 "password", faker.internet().password(3, 12)
         );
 
-
         var request = post("/api/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
@@ -197,7 +192,7 @@ public class UsersControllerTest {
                 "password", faker.internet().password(3, 12)
         );
 
-        var request = post("/api/users").with(jwt())
+        var request = post("/api/users").with(token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(dataWithoutFirstNameAndLastName));
 
@@ -220,7 +215,7 @@ public class UsersControllerTest {
                 "password", faker.internet().password(1, 2)
         );
 
-        var request = post("/api/users").with(jwt())
+        var request = post("/api/users").with(token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(dataWithInvalidPassword));
 
@@ -237,7 +232,7 @@ public class UsersControllerTest {
                 "password", faker.internet().password(3, 12)
         );
 
-        var request = post("/api/users").with(jwt())
+        var request = post("/api/users").with(token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(dataWithInvalidEmail));
 
@@ -247,9 +242,6 @@ public class UsersControllerTest {
 
     @Test
     public void testUpdate() throws Exception {
-        var testUser = generateUser();
-        userRepository.save(testUser);
-
         var data = Map.of(
                 "email", faker.internet().emailAddress(),
                 "firstName", faker.name().firstName(),
@@ -257,7 +249,7 @@ public class UsersControllerTest {
                 "password", faker.internet().password(3, 12)
         );
 
-        var request = put("/api/users/{id}", testUser.getId()).with(jwt())
+        var request = put("/api/users/{id}", testUser.getId()).with(token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
@@ -275,15 +267,12 @@ public class UsersControllerTest {
 
     @Test
     public void testPartialUpdate() throws Exception {
-        var testUser = generateUser();
-        userRepository.save(testUser);
-
         var data = Map.of(
                 "firstName", faker.name().firstName(),
                 "lastName", faker.name().lastName()
         );
 
-        var request = put("/api/users/{id}", testUser.getId()).with(jwt())
+        var request = put("/api/users/{id}", testUser.getId()).with(token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
@@ -302,9 +291,6 @@ public class UsersControllerTest {
 
     @Test
     public void testUpdateWithoutAuth() throws Exception {
-        var testUser = generateUser();
-        userRepository.save(testUser);
-
         var data = Map.of(
                 "email", faker.internet().emailAddress(),
                 "firstName", faker.name().firstName(),
@@ -322,22 +308,16 @@ public class UsersControllerTest {
 
     @Test
     public void testDestroy() throws Exception {
-        var testUser = generateUser();
-        userRepository.save(testUser);
-
-        var request = delete("/api/users/{id}", testUser.getId()).with(jwt());
+        var request = delete("/api/users/{id}", testUser.getId()).with(token);
         mockMvc.perform(request)
                 .andExpect(status().isNoContent());
 
-        testUser = userRepository.findById(testUser.getId()).orElse(null);
-        assertThat(testUser).isNull();
+        var user = userRepository.findById(testUser.getId()).orElse(null);
+        assertThat(user).isNull();
     }
 
     @Test
     public void testDestroyWithoutAuth() throws Exception {
-        var testUser = generateUser();
-        userRepository.save(testUser);
-
         var request = delete("/api/users/{id}", testUser.getId());
         mockMvc.perform(request)
                 .andExpect(status().isUnauthorized());
@@ -345,14 +325,20 @@ public class UsersControllerTest {
 
     @Test
     public void testDestroyUserHasTask() throws Exception {
-        var testTask = generateTask();
-        taskRepository.save(testTask);
+        var taskStatus = taskStatusRepository.findBySlug("draft")
+                .orElseThrow(() -> new RuntimeException("TaskStatus doesn't exist"));
 
-        String email = "hexlet@example.com";
-        var token = jwt().jwt(builder -> builder.subject(email));
+        var label = labelRepository.findByName("feature")
+                .orElseThrow(() -> new RuntimeException("Label doesn't exist"));
 
-        var user = userRepository.findByEmail(email).get();
-        var request = delete("/api/users/{id}", user.getId()).with(token);
+        var task = Instancio.of(modelGenerator.getTaskModel()).create();
+        task.setAuthor(testUser);
+        task.setAssignee(testUser);
+        task.setTaskStatus(taskStatus);
+        task.setLabels(List.of(label));
+        taskRepository.save(task);
+
+        var request = delete("/api/users/{id}", testUser.getId()).with(token);
         mockMvc.perform(request)
                 .andExpect(status().isMethodNotAllowed());
     }

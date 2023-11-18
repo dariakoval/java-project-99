@@ -1,22 +1,25 @@
 package hexlet.code.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hexlet.code.model.Task;
 import hexlet.code.model.TaskStatus;
 import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
+import hexlet.code.util.ModelGenerator;
 import net.datafaker.Faker;
 import org.instancio.Instancio;
-import org.instancio.Select;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
@@ -43,6 +46,9 @@ public class TaskStatusesControllerTest {
     private ObjectMapper om;
 
     @Autowired
+    private ModelGenerator modelGenerator;
+
+    @Autowired
     private TaskStatusRepository taskStatusRepository;
 
     @Autowired
@@ -54,39 +60,32 @@ public class TaskStatusesControllerTest {
     @Autowired
     private LabelRepository labelRepository;
 
-    private Task generateTask() {
-        var user = userRepository.findById(1L).get();
-        var taskStatus = taskStatusRepository.findBySlug("draft").get();
-        var label = labelRepository.findByName("feature").get();
-        return Instancio.of(Task.class)
-                .ignore(Select.field(Task::getId))
-                .supply(Select.field(Task::getIndex), () -> (Integer) faker.number().positive())
-                .supply(Select.field(Task::getAuthor), () -> user)
-                .supply(Select.field(Task::getTitle), () -> faker.lorem().word())
-                .supply(Select.field(Task::getContent), () -> faker.lorem().sentence())
-                .supply(Select.field(Task::getTaskStatus), () -> taskStatus)
-                .supply(Select.field(Task::getAssignee), () -> user)
-                .supply(Select.field(Task::getLabels), () -> List.of(label))
-                .create();
+    private SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor token;
 
+    private TaskStatus testTaskStatus;
+
+    @BeforeEach
+    public void setUp() {
+        token = jwt().jwt(builder -> builder.subject("hexlet@example.com"));
+        testTaskStatus = Instancio.of(modelGenerator.getTaskStatusModel())
+                .create();
+        taskStatusRepository.save(testTaskStatus);
     }
 
-    private TaskStatus generateTaskStatus() {
-        String word = faker.lorem().word().toLowerCase();
-        return Instancio.of(TaskStatus.class)
-                .ignore(Select.field(TaskStatus::getId))
-                .supply(Select.field(TaskStatus::getName), () -> word.substring(0, 1).toUpperCase()
-                        + word.substring(1))
-                .supply(Select.field(TaskStatus::getSlug), () -> word)
-                .create();
+    @AfterEach
+    public void cleanUp() {
+        var task = taskRepository.findByTaskStatus(testTaskStatus);
+
+        if (task.isEmpty()) {
+            taskStatusRepository.deleteById(testTaskStatus.getId());
+        }
     }
 
     @Test
     public void testShow() throws Exception {
-        var testTaskStatus = generateTaskStatus();
-        taskStatusRepository.save(testTaskStatus);
+        var createdAt = java.util.Date.from(testTaskStatus.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant());
 
-        var request = get("/api/task_statuses/{id}", testTaskStatus.getId()).with(jwt());
+        var request = get("/api/task_statuses/{id}", testTaskStatus.getId()).with(token);
         var result = mockMvc.perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
@@ -95,7 +94,7 @@ public class TaskStatusesControllerTest {
         assertThatJson(body).and(
                 v -> v.node("name").isEqualTo(testTaskStatus.getName()),
                 v -> v.node("slug").isEqualTo(testTaskStatus.getSlug()),
-                v -> v.node("createdAt").isEqualTo(testTaskStatus.getCreatedAt())
+                v -> v.node("createdAt").isEqualTo(createdAt)
         );
     }
 
@@ -104,16 +103,13 @@ public class TaskStatusesControllerTest {
         Long id = 100L;
         taskStatusRepository.deleteById(id);
 
-        var request = get("/api/task_statuses/{id}", id).with(jwt());
+        var request = get("/api/task_statuses/{id}", id).with(token);
         mockMvc.perform(request)
                 .andExpect(status().isNotFound());
     }
 
     @Test
     public void testShowWithoutAuth() throws Exception {
-        var testTaskStatus = generateTaskStatus();
-        taskStatusRepository.save(testTaskStatus);
-
         var request = get("/api/task_statuses/{id}", testTaskStatus.getId());
         mockMvc.perform(request)
                 .andExpect(status().isUnauthorized());
@@ -121,23 +117,24 @@ public class TaskStatusesControllerTest {
 
     @Test
     public void testIndex() throws Exception {
-        var testTaskStatus = generateTaskStatus();
-        taskStatusRepository.save(testTaskStatus);
-
-        var request = get("/api/task_statuses").with(jwt());
+        var request = get("/api/task_statuses").with(token);
         var result = mockMvc.perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
 
         var body = result.getResponse().getContentAsString();
         assertThatJson(body).isArray();
+
+        var listOfTaskStatuses = taskStatusRepository.findAll();
+        for (var taskStatus: listOfTaskStatuses) {
+            assertThat(body).contains(String.valueOf(taskStatus.getId()));
+            assertThat(body).contains(taskStatus.getName());
+            assertThat(body).contains(taskStatus.getSlug());
+        }
     }
 
     @Test
     public void testIndexWithoutAuth() throws Exception {
-        var testTaskStatus = generateTaskStatus();
-        taskStatusRepository.save(testTaskStatus);
-
         var request = get("/api/task_statuses");
         mockMvc.perform(request)
                 .andExpect(status().isUnauthorized());
@@ -146,11 +143,11 @@ public class TaskStatusesControllerTest {
     @Test
     public void testCreate() throws Exception {
         var data = Map.of(
-                "name", "New",
-                "slug", "new"
+                "name", "To test create",
+                "slug", "to_test_create"
         );
 
-        var request = post("/api/task_statuses").with(jwt())
+        var request = post("/api/task_statuses").with(token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
@@ -166,13 +163,12 @@ public class TaskStatusesControllerTest {
 
     @Test
     public void testCreateWithInvalidName() throws Exception {
-        String word = faker.lorem().word();
         var data = Map.of(
                 "name", "",
-                "slug", word.toLowerCase()
+                "slug", "to_test_create_with_invalid_name"
         );
 
-        var request = post("/api/task_statuses").with(jwt())
+        var request = post("/api/task_statuses").with(token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
@@ -182,13 +178,12 @@ public class TaskStatusesControllerTest {
 
     @Test
     public void testCreateWithInvalidSlug() throws Exception {
-        String word = faker.lorem().word();
         var data = Map.of(
-                "name", word.substring(0, 1).toUpperCase() + word.substring(1),
+                "name", "To test create with invalid slug",
                 "slug", ""
         );
 
-        var request = post("/api/task_statuses").with(jwt())
+        var request = post("/api/task_statuses").with(token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
@@ -198,10 +193,9 @@ public class TaskStatusesControllerTest {
 
     @Test
     public void testCreateWithoutAuth() throws Exception {
-        String word = faker.lorem().word();
         var data = Map.of(
-                "name", word.substring(0, 1).toUpperCase() + word.substring(1),
-                "slug", word.toLowerCase()
+                "name", "To test create without auth",
+                "slug", "to_test_create_without_auth"
         );
 
         var request = post("/api/task_statuses")
@@ -214,16 +208,12 @@ public class TaskStatusesControllerTest {
 
     @Test
     public void testUpdate() throws Exception {
-        var testTaskStatus = generateTaskStatus();
-        taskStatusRepository.save(testTaskStatus);
-
-        String word = faker.lorem().word();
         var data = Map.of(
-                "name", word.substring(0, 1).toUpperCase() + word.substring(1),
-                "slug", word.toLowerCase()
+                "name", "To test update",
+                "slug", "to_test_update"
         );
 
-        var request = put("/api/task_statuses/{id}", testTaskStatus.getId()).with(jwt())
+        var request = put("/api/task_statuses/{id}", testTaskStatus.getId()).with(token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
@@ -239,14 +229,11 @@ public class TaskStatusesControllerTest {
 
     @Test
     public void testPartialUpdate() throws Exception {
-        var testTaskStatus = generateTaskStatus();
-        taskStatusRepository.save(testTaskStatus);
-
         var data = Map.of(
-                "slug", faker.lorem().word().toLowerCase()
+                "slug", "to_partial_update"
         );
 
-        var request = put("/api/task_statuses/{id}", testTaskStatus.getId()).with(jwt())
+        var request = put("/api/task_statuses/{id}", testTaskStatus.getId()).with(token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
@@ -262,13 +249,9 @@ public class TaskStatusesControllerTest {
 
     @Test
     public void testUpdateWithoutAuth() throws Exception {
-        var testTaskStatus = generateTaskStatus();
-        taskStatusRepository.save(testTaskStatus);
-
-        String word = faker.lorem().word();
         var data = Map.of(
-                "name", word.substring(0, 1).toUpperCase() + word.substring(1),
-                "slug", word.toLowerCase()
+                "name", "To test update without auth",
+                "slug", "to_test_update_without_auth"
         );
 
         var request = put("/api/task_statuses/{id}", testTaskStatus.getId())
@@ -281,22 +264,16 @@ public class TaskStatusesControllerTest {
 
     @Test
     public void testDestroy() throws Exception {
-        var testTaskStatus = generateTaskStatus();
-        taskStatusRepository.save(testTaskStatus);
-
-        var request = delete("/api/task_statuses/{id}", testTaskStatus.getId()).with(jwt());
+        var request = delete("/api/task_statuses/{id}", testTaskStatus.getId()).with(token);
         mockMvc.perform(request)
                 .andExpect(status().isNoContent());
 
-        testTaskStatus = taskStatusRepository.findById(testTaskStatus.getId()).orElse(null);
-        assertThat(testTaskStatus).isNull();
+        var taskStatus = taskStatusRepository.findById(testTaskStatus.getId()).orElse(null);
+        assertThat(taskStatus).isNull();
     }
 
     @Test
     public void testDestroyWithoutAuth() throws Exception {
-        var testTaskStatus = generateTaskStatus();
-        taskStatusRepository.save(testTaskStatus);
-
         var request = delete("/api/task_statuses/{id}", testTaskStatus.getId());
         mockMvc.perform(request)
                 .andExpect(status().isUnauthorized());
@@ -304,15 +281,20 @@ public class TaskStatusesControllerTest {
 
     @Test
     public void testDestroyStatusHasTask() throws Exception {
-        var testTask = generateTask();
-        taskRepository.save(testTask);
+        var user = userRepository.findByEmail("hexlet@example.com")
+                .orElseThrow(() -> new RuntimeException("User doesn't exist"));
 
-        String email = "hexlet@example.com";
-        var token = jwt().jwt(builder -> builder.subject(email));
-        String slug = "draft";
-        var taskStatus = taskStatusRepository.findBySlug(slug).get();
+        var label = labelRepository.findByName("feature")
+                .orElseThrow(() -> new RuntimeException("Label doesn't exist"));
 
-        var request = delete("/api/task_statuses/{id}", taskStatus.getId()).with(token);
+        var task = Instancio.of(modelGenerator.getTaskModel()).create();
+        task.setAuthor(user);
+        task.setAssignee(user);
+        task.setTaskStatus(testTaskStatus);
+        task.setLabels(List.of(label));
+        taskRepository.save(task);
+
+        var request = delete("/api/task_statuses/{id}", testTaskStatus.getId()).with(token);
         mockMvc.perform(request)
                 .andExpect(status().isMethodNotAllowed());
     }

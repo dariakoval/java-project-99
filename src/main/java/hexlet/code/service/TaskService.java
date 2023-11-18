@@ -13,35 +13,28 @@ import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
 import hexlet.code.specification.TaskSpecification;
 import hexlet.code.util.UserUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@AllArgsConstructor
 public class TaskService {
-    @Autowired
-    private TaskRepository taskRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final TaskRepository taskRepository;
 
-    @Autowired
-    private TaskStatusRepository taskStatusRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private LabelRepository labelRepository;
+    private final TaskStatusRepository taskStatusRepository;
 
-    @Autowired
-    private TaskMapper taskMapper;
+    private final LabelRepository labelRepository;
 
-    @Autowired
-    private UserUtils userUtils;
+    private final TaskMapper taskMapper;
 
-    @Autowired
-    private TaskSpecification specBuilder;
+    private final UserUtils userUtils;
 
+    private final TaskSpecification specBuilder;
 
     public List<TaskDTO> getAll(TaskParamsDTO params) {
         var spec = specBuilder.build(params);
@@ -61,15 +54,11 @@ public class TaskService {
         var statusSlug = taskData.getStatus();
         var taskStatus = taskStatusRepository.findBySlug(statusSlug).get();
 
-        var labelsId = taskData.getTaskLabelIds();
-        if (labelsId != null) {
-            var labels = labelsId.stream()
-                    .map(i -> labelRepository.findById(i).get())
-                    .toList();
-            task.setLabels(labels);
-        } else {
-            task.setLabels(new ArrayList<>());
-        }
+        var labelIds = taskData.getTaskLabelIds();
+        var labels = labelIds.stream()
+                .map(i -> labelRepository.findById(i).get())
+                .toList();
+        task.setLabels(labels);
 
         task.setAuthor(currentUser);
         task.setAssignee(assignee);
@@ -92,21 +81,21 @@ public class TaskService {
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("Task with id %s not found", id)));
         var userId = taskData.getAssigneeId();
         var statusSlug = taskData.getStatus();
-        var labelsId = taskData.getTaskLabelIds();
+        var labelIds = taskData.getTaskLabelIds();
         taskMapper.update(taskData, task);
 
-        if (userId == null && statusSlug == null && labelsId == null) {
+        if (userId == null && statusSlug == null && labelIds == null) {
             taskRepository.save(task);
-        } else if (userId == null && labelsId == null) {
+        } else if (userId == null && labelIds == null) {
             var taskStatus = taskStatusRepository.findBySlug((statusSlug).get()).get();
             task.setTaskStatus(taskStatus);
             taskRepository.save(task);
-        } else if (statusSlug == null && labelsId == null) {
+        } else if (statusSlug == null && labelIds == null) {
             var user =  userRepository.findById(userId.get()).get();
             task.setAssignee(user);
             taskRepository.save(task);
         } else if (userId == null && statusSlug == null) {
-            var labels = labelsId.get().stream()
+            var labels = labelIds.get().stream()
                     .map(l -> labelRepository.findById(l).get())
                     .toList();
             task.setLabels(labels);
@@ -114,7 +103,7 @@ public class TaskService {
         } else {
             var user =  userRepository.findById(userId.get()).get();
             var taskStatus = taskStatusRepository.findBySlug((statusSlug).get()).get();
-            var labels = labelsId.get().stream()
+            var labels = labelIds.get().stream()
                     .map(l -> labelRepository.findById(l).get())
                     .toList();
             task.setAssignee(user);

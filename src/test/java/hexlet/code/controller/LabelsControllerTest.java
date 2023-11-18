@@ -3,16 +3,20 @@ package hexlet.code.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.model.Label;
 import hexlet.code.repository.LabelRepository;
+import hexlet.code.util.ModelGenerator;
 import net.datafaker.Faker;
 import org.instancio.Instancio;
-import org.instancio.Select;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.ZoneId;
 import java.util.Map;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
@@ -38,21 +42,33 @@ public class LabelsControllerTest {
     private ObjectMapper om;
 
     @Autowired
+    private ModelGenerator modelGenerator;
+
+    @Autowired
     private LabelRepository labelRepository;
 
-    private Label generateLabel() {
-        return Instancio.of(Label.class)
-                .ignore(Select.field(Label::getId))
-                .supply(Select.field(Label::getName), () -> faker.lorem().characters(3, 1000))
+    private SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor token;
+
+    private Label testLabel;
+
+    @BeforeEach
+    public void setUp() {
+        token = jwt().jwt(builder -> builder.subject("hexlet@example.com"));
+        testLabel = Instancio.of(modelGenerator.getLabelModel())
                 .create();
+        labelRepository.save(testLabel);
+    }
+
+    @AfterEach
+    public void cleanUp() {
+        labelRepository.deleteById(testLabel.getId());
     }
 
     @Test
     public void testShow() throws Exception {
-        var testLabel = generateLabel();
-        labelRepository.save(testLabel);
+        var createdAt = java.util.Date.from(testLabel.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant());
 
-        var request = get("/api/labels/{id}", testLabel.getId()).with(jwt());
+        var request = get("/api/labels/{id}", testLabel.getId()).with(token);
         var result = mockMvc.perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
@@ -60,7 +76,7 @@ public class LabelsControllerTest {
 
         assertThatJson(body).and(
                 v -> v.node("name").isEqualTo(testLabel.getName()),
-                v -> v.node("createdAt").isEqualTo(testLabel.getCreatedAt())
+                v -> v.node("createdAt").isEqualTo(createdAt)
         );
     }
 
@@ -69,16 +85,13 @@ public class LabelsControllerTest {
         Long id = 100L;
         labelRepository.deleteById(id);
 
-        var request = get("/api/labels/{id}", id).with(jwt());
+        var request = get("/api/labels/{id}", id).with(token);
         mockMvc.perform(request)
                 .andExpect(status().isNotFound());
     }
 
     @Test
     public void testShowWithoutAuth() throws Exception {
-        var testLabel = generateLabel();
-        labelRepository.save(testLabel);
-
         var request = get("/api/labels/{id}", testLabel.getId());
         mockMvc.perform(request)
                 .andExpect(status().isUnauthorized());
@@ -86,23 +99,23 @@ public class LabelsControllerTest {
 
     @Test
     public void testIndex() throws Exception {
-        var testLabel = generateLabel();
-        labelRepository.save(testLabel);
-
-        var request = get("/api/labels").with(jwt());
+        var request = get("/api/labels").with(token);
         var result = mockMvc.perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
 
         var body = result.getResponse().getContentAsString();
         assertThatJson(body).isArray();
+
+        var listOfLabels = labelRepository.findAll();
+        for (var label: listOfLabels) {
+            assertThat(body).contains(String.valueOf(label.getId()));
+            assertThat(body).contains(label.getName());
+        }
     }
 
     @Test
     public void testIndexWithoutAuth() throws Exception {
-        var testLabel = generateLabel();
-        labelRepository.save(testLabel);
-
         var request = get("/api/labels");
         mockMvc.perform(request)
                 .andExpect(status().isUnauthorized());
@@ -111,17 +124,17 @@ public class LabelsControllerTest {
     @Test
     public void testCreate() throws Exception {
         var data = Map.of(
-                "name", faker.lorem().characters(3, 1000)
+                "name", "good"
         );
 
-        var request = post("/api/labels").with(jwt())
+        var request = post("/api/labels").with(token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
         mockMvc.perform(request)
                 .andExpect(status().isCreated());
 
-        var label = labelRepository.findByName(data.get("name")).get();
+        var label = labelRepository.findByName(data.get("name")).orElse(null);
 
         assertThat(label).isNotNull();
         assertThat(label.getName()).isEqualTo(data.get("name"));
@@ -130,7 +143,7 @@ public class LabelsControllerTest {
     @Test
     public void testCreateWithoutAuth() throws Exception {
         var data = Map.of(
-                "name", faker.lorem().characters(3, 1000)
+                "name", "bad"
         );
 
         var request = post("/api/labels")
@@ -144,10 +157,10 @@ public class LabelsControllerTest {
     @Test
     public void testCreateWithInvalidName() throws Exception {
         var data = Map.of(
-                "name", faker.lorem().characters(1, 2)
+                "name", "oh"
         );
 
-        var request = post("/api/labels").with(jwt())
+        var request = post("/api/labels").with(token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
@@ -157,32 +170,27 @@ public class LabelsControllerTest {
 
     @Test
     public void testUpdate() throws Exception {
-        var testLabel = generateLabel();
-        labelRepository.save(testLabel);
-
         var data = Map.of(
-                "name", faker.lorem().characters(3, 1000)
+                "name", "renewed"
         );
 
-        var request = put("/api/labels/{id}", testLabel.getId()).with(jwt())
+        var request = put("/api/labels/{id}", testLabel.getId()).with(token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
         mockMvc.perform(request)
                 .andExpect(status().isOk());
 
-        var updatedLabel = labelRepository.findByName(data.get("name")).get();
+        var updatedLabel = labelRepository.findByName(data.get("name")).orElse(null);
+
         assertThat(updatedLabel).isNotNull();
         assertThat(updatedLabel.getName()).isEqualTo(data.get("name"));
     }
 
     @Test
     public void testUpdateWithoutAuth() throws Exception {
-        var testLabel = generateLabel();
-        labelRepository.save(testLabel);
-
         var data = Map.of(
-                "name", faker.lorem().characters(3, 1000)
+                "name", "not updated"
         );
 
         var request = put("/api/labels/{id}", testLabel.getId())
@@ -195,22 +203,16 @@ public class LabelsControllerTest {
 
     @Test
     public void testDestroy() throws Exception {
-        var testLabel = generateLabel();
-        labelRepository.save(testLabel);
-
-        var request = delete("/api/labels/{id}", testLabel.getId()).with(jwt());
+        var request = delete("/api/labels/{id}", testLabel.getId()).with(token);
         mockMvc.perform(request)
                 .andExpect(status().isNoContent());
 
-        testLabel = labelRepository.findById(testLabel.getId()).orElse(null);
-        assertThat(testLabel).isNull();
+        var label = labelRepository.findById(testLabel.getId()).orElse(null);
+        assertThat(label).isNull();
     }
 
     @Test
     public void testDestroyWithoutAuth() throws Exception {
-        var testLabel = generateLabel();
-        labelRepository.save(testLabel);
-
         var request = delete("/api/labels/{id}", testLabel.getId());
         mockMvc.perform(request)
                 .andExpect(status().isUnauthorized());

@@ -5,6 +5,7 @@ import hexlet.code.dto.TaskDTO;
 import hexlet.code.dto.TaskUpdateDTO;
 import hexlet.code.model.Task;
 import hexlet.code.repository.LabelRepository;
+import lombok.Getter;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
@@ -13,6 +14,9 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.ZoneId;
+
+@Getter
 @Mapper(
         uses = { JsonNullableMapper.class, ReferenceMapper.class },
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
@@ -24,22 +28,22 @@ public abstract class TaskMapper {
     @Autowired
     private LabelRepository labelRepository;
 
-    public LabelRepository getLabelRepository() {
-        return labelRepository;
-    }
+    private ZoneId zoneId;
 
     @Mapping(target = "assignee.id", source = "assigneeId")
     @Mapping(target = "taskStatus.name", source = "status")
     @Mapping(
             target = "labels",
             expression = "java(dto.getTaskLabelIds().stream()"
-            + ".map(i -> getLabelRepository().findById(i).get()).toList())"
+                    + ".map(i -> getLabelRepository().findById(i).get()).toList())"
     )
     public abstract Task map(TaskCreateDTO dto);
 
     @Mapping(source = "assignee.id", target = "assigneeId")
     @Mapping(source = "taskStatus.name", target = "status")
     @Mapping(target = "taskLabelIds", expression = "java(model.getLabels().stream().map(i -> i.getId()).toList())")
+    @Mapping(target = "createdAt", expression = "java(java.util.Date.from(model.getCreatedAt()"
+            + ".atZone(getZoneId().systemDefault()).toInstant()))")
     public abstract TaskDTO map(Task model);
 
     public abstract void update(TaskUpdateDTO dto, @MappingTarget Task model);
