@@ -10,6 +10,6 @@ import java.util.Optional;
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long>, JpaSpecificationExecutor<Task> {
-    Optional<Task> findByTitle(String title);
+    Optional<Task> findByName(String title);
     Optional<Task> findByTaskStatus(TaskStatus taskStatus);
 }

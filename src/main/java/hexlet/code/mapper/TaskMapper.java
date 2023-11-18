@@ -37,6 +37,8 @@ public abstract class TaskMapper {
             expression = "java(dto.getTaskLabelIds().stream()"
                     + ".map(i -> getLabelRepository().findById(i).get()).toList())"
     )
+    @Mapping(target = "name", source = "title")
+    @Mapping(target = "description", source = "content")
     public abstract Task map(TaskCreateDTO dto);
 
     @Mapping(source = "assignee.id", target = "assigneeId")
@@ -44,7 +46,11 @@ public abstract class TaskMapper {
     @Mapping(target = "taskLabelIds", expression = "java(model.getLabels().stream().map(i -> i.getId()).toList())")
     @Mapping(target = "createdAt", expression = "java(java.util.Date.from(model.getCreatedAt()"
             + ".atZone(getZoneId().systemDefault()).toInstant()))")
+    @Mapping(source = "name", target = "title")
+    @Mapping(source = "description", target = "content")
     public abstract TaskDTO map(Task model);
 
+    @Mapping(target = "name", source = "title")
+    @Mapping(target = "description", source = "content")
     public abstract void update(TaskUpdateDTO dto, @MappingTarget Task model);
 }

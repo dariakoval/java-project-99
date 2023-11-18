@@ -40,10 +40,10 @@ public class Task implements BaseEntity {
     private User author;
 
     @NotBlank
-    private String title;
+    private String name;
 
     @Column(columnDefinition = "TEXT")
-    private String content;
+    private String description;
 
     @ManyToOne
     @NotNull

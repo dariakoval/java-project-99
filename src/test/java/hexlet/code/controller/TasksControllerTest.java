@@ -104,8 +104,8 @@ public class TasksControllerTest {
 
         assertThatJson(body).and(
                 v -> v.node("index").isEqualTo(testTask.getIndex()),
-                v -> v.node("title").isEqualTo(testTask.getTitle()),
-                v -> v.node("content").isEqualTo(testTask.getContent()),
+                v -> v.node("title").isEqualTo(testTask.getName()),
+                v -> v.node("content").isEqualTo(testTask.getDescription()),
                 v -> v.node("status").isEqualTo(testTask.getTaskStatus().getName()),
                 v -> v.node("assigneeId").isEqualTo(testTask.getAssignee().getId()),
                 v -> v.node("createdAt").isEqualTo(createdAt),
@@ -142,13 +142,13 @@ public class TasksControllerTest {
 
         var listOfTasks = taskRepository.findAll();
         for (var task: listOfTasks) {
-            if (task.getIndex() != null && task.getContent() != null) {
+            if (task.getIndex() != null && task.getDescription() != null) {
                 assertThat(body).contains(String.valueOf(task.getIndex()));
-                assertThat(body).contains(task.getContent());
+                assertThat(body).contains(task.getDescription());
             }
             assertThat(body).contains(String.valueOf(task.getId()));
             assertThat(body).contains(String.valueOf(task.getAssignee().getId()));
-            assertThat(body).contains(task.getTitle());
+            assertThat(body).contains(task.getName());
             assertThat(body).contains(task.getTaskStatus().getName());
             assertThat(body).contains(String.valueOf(task.getLabels().get(0).getId()));
         }
@@ -156,7 +156,7 @@ public class TasksControllerTest {
 
     @Test
     public void testIndexFilterWithTitleCont() throws Exception {
-        var titleCont = testTask.getTitle();
+        var titleCont = testTask.getName();
 
         var request = get("/api/tasks?titleCont=" + titleCont).with(token);
         var result = mockMvc.perform(request)
@@ -237,12 +237,12 @@ public class TasksControllerTest {
         mockMvc.perform(request)
                 .andExpect(status().isCreated());
 
-        var task = taskRepository.findByTitle((String) data.get("title")).orElse(null);
+        var task = taskRepository.findByName((String) data.get("title")).orElse(null);
 
         assertThat(task).isNotNull();
         assertThat(task.getIndex()).isEqualTo(data.get("index"));
-        assertThat(task.getTitle()).isEqualTo(data.get("title"));
-        assertThat(task.getContent()).isEqualTo(data.get("content"));
+        assertThat(task.getName()).isEqualTo(data.get("title"));
+        assertThat(task.getDescription()).isEqualTo(data.get("content"));
         assertThat(task.getTaskStatus().getName()).isEqualTo("Draft");
         assertThat(task.getAssignee().getId()).isEqualTo(data.get("assignee_id"));
         assertThat(task.getLabels().get(0).getId()).isEqualTo(1L);
@@ -265,10 +265,10 @@ public class TasksControllerTest {
         mockMvc.perform(request)
                 .andExpect(status().isCreated());
 
-        var task = taskRepository.findByTitle((String) data.get("title")).orElse(null);
+        var task = taskRepository.findByName((String) data.get("title")).orElse(null);
 
         assertThat(task).isNotNull();
-        assertThat(task.getTitle()).isEqualTo(data.get("title"));
+        assertThat(task.getName()).isEqualTo(data.get("title"));
         assertThat(task.getTaskStatus().getName()).isEqualTo("Draft");
         assertThat(task.getAssignee().getId()).isEqualTo(data.get("assignee_id"));
         assertThat(task.getLabels().get(0).getId()).isEqualTo(1L);
@@ -356,8 +356,8 @@ public class TasksControllerTest {
         assertThat(updatedTask).isNotNull();
         assertThat(updatedTask.getIndex()).isEqualTo(data.getIndex().get());
         assertThat(updatedTask.getAssignee().getId()).isEqualTo(data.getAssigneeId().get());
-        assertThat(updatedTask.getTitle()).isEqualTo(data.getTitle().get());
-        assertThat(updatedTask.getContent()).isEqualTo(data.getContent().get());
+        assertThat(updatedTask.getName()).isEqualTo(data.getTitle().get());
+        assertThat(updatedTask.getDescription()).isEqualTo(data.getContent().get());
         assertThat(updatedTask.getTaskStatus().getSlug()).isEqualTo(data.getStatus().get());
         assertThat(updatedTask.getLabels().get(0).getId()).isEqualTo(1L);
         assertThat(updatedTask.getLabels().get(1).getId()).isEqualTo(2L);
@@ -382,8 +382,8 @@ public class TasksControllerTest {
         assertThat(updatedTask).isNotNull();
         assertThat(updatedTask.getIndex()).isEqualTo(testTask.getIndex());
         assertThat(updatedTask.getAssignee().getId()).isEqualTo(testTask.getAssignee().getId());
-        assertThat(updatedTask.getTitle()).isEqualTo(data.getTitle().get());
-        assertThat(updatedTask.getContent()).isEqualTo(data.getContent().get());
+        assertThat(updatedTask.getName()).isEqualTo(data.getTitle().get());
+        assertThat(updatedTask.getDescription()).isEqualTo(data.getContent().get());
         assertThat(updatedTask.getTaskStatus().getSlug()).isEqualTo(data.getStatus().get());
     }
 
