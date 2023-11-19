@@ -34,6 +34,7 @@ import static hexlet.code.controller.LabelsController.LABELS_CONTROLLER_PATH;
 @RestController
 @RequestMapping("${base-url}" + LABELS_CONTROLLER_PATH)
 @AllArgsConstructor
+@SecurityRequirement(name = "JWT")
 public class LabelsController {
 
     public static final String LABELS_CONTROLLER_PATH = "/labels";
@@ -42,7 +43,6 @@ public class LabelsController {
 
     private final LabelService labelService;
 
-    @SecurityRequirement(name = "JWT")
     @Operation(summary = "Get a label by its id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Found the label",
@@ -58,7 +58,6 @@ public class LabelsController {
         return labelService.findById(id);
     }
 
-    @SecurityRequirement(name = "JWT")
     @Operation(summary = "Get list of all labels")
     @ApiResponse(responseCode = "200", description = "List of all labels",
             content = { @Content(mediaType = "application/json",
@@ -72,7 +71,6 @@ public class LabelsController {
                 .body(labels);
     }
 
-    @SecurityRequirement(name = "JWT")
     @Operation(summary = "Create new label")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Label created",
@@ -88,7 +86,6 @@ public class LabelsController {
         return labelService.create(labelData);
     }
 
-    @SecurityRequirement(name = "JWT")
     @Operation(summary = "Update label by its id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Label updated",
@@ -107,7 +104,6 @@ public class LabelsController {
         return labelService.update(labelData, id);
     }
 
-    @SecurityRequirement(name = "JWT")
     @Operation(summary = "Delete label by its id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Label deleted", content = @Content),

@@ -35,6 +35,7 @@ import static hexlet.code.controller.UsersController.USER_CONTROLLER_PATH;
 @RestController
 @RequestMapping("${base-url}" + USER_CONTROLLER_PATH)
 @AllArgsConstructor
+@SecurityRequirement(name = "JWT")
 public class UsersController {
 
     public static final String USER_CONTROLLER_PATH = "/users";
@@ -47,7 +48,6 @@ public class UsersController {
 
     private final UserService userService;
 
-    @SecurityRequirement(name = "JWT")
     @Operation(summary = "Get specific user by his id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Found the user",
@@ -63,7 +63,6 @@ public class UsersController {
         return userService.findById(id);
     }
 
-    @SecurityRequirement(name = "JWT")
     @Operation(summary = "Get list of all users")
     @ApiResponse(responseCode = "200", description = "List of all users",
             content = { @Content(mediaType = "application/json",
@@ -77,7 +76,6 @@ public class UsersController {
                 .body(users);
     }
 
-    @SecurityRequirement(name = "JWT")
     @Operation(summary = "Create new user")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "User created",
@@ -93,7 +91,6 @@ public class UsersController {
         return userService.create(userData);
     }
 
-    @SecurityRequirement(name = "JWT")
     @Operation(summary = "Update user by his id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User updated",
@@ -112,7 +109,6 @@ public class UsersController {
         return userService.update(userData, id);
     }
 
-    @SecurityRequirement(name = "JWT")
     @Operation(summary = "Delete user by his id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "User deleted", content = @Content),

@@ -35,6 +35,7 @@ import static hexlet.code.controller.TasksController.TASK_CONTROLLER_PATH;
 @RestController
 @RequestMapping("${base-url}" + TASK_CONTROLLER_PATH)
 @AllArgsConstructor
+@SecurityRequirement(name = "JWT")
 public class TasksController {
 
     public static final String TASK_CONTROLLER_PATH = "/tasks";
@@ -43,7 +44,6 @@ public class TasksController {
 
     private final TaskService taskService;
 
-    @SecurityRequirement(name = "JWT")
     @Operation(summary = "Get a task by its id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Found the task",
@@ -59,7 +59,6 @@ public class TasksController {
         return taskService.findById(id);
     }
 
-    @SecurityRequirement(name = "JWT")
     @Operation(summary = "Get list of all tasks")
     @ApiResponse(responseCode = "200", description = "List of all tasks",
             content = { @Content(mediaType = "application/json",
@@ -76,7 +75,6 @@ public class TasksController {
                 .body(tasks);
     }
 
-    @SecurityRequirement(name = "JWT")
     @Operation(summary = "Create new task")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Task created",
@@ -92,7 +90,6 @@ public class TasksController {
         return taskService.create(taskData);
     }
 
-    @SecurityRequirement(name = "JWT")
     @Operation(summary = "Update task by its id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Task updated",
@@ -111,7 +108,6 @@ public class TasksController {
         return taskService.update(taskData, id);
     }
 
-    @SecurityRequirement(name = "JWT")
     @Operation(summary = "Delete task by its id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Task deleted", content = @Content),
