@@ -95,7 +95,8 @@ public class TasksControllerTest {
 
     @Test
     public void testShow() throws Exception {
-        var createdAt = java.util.Date.from(testTask.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant());
+        var createdAt = java.util.Date.from(testTask.getCreatedAt()
+                .atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
 
         var request = get("/api/tasks/{id}", testTask.getId()).with(token);
         var result = mockMvc.perform(request)

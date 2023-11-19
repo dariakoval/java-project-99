@@ -48,7 +48,7 @@ public abstract class TaskMapper {
     @Mapping(source = "taskStatus.name", target = "status")
     @Mapping(target = "taskLabelIds", expression = "java(model.getLabels().stream().map(i -> i.getId()).toList())")
     @Mapping(target = "createdAt", expression = "java(java.util.Date.from(model.getCreatedAt()"
-            + ".atZone(getZoneId().systemDefault()).toInstant()))")
+            + ".atStartOfDay().atZone(getZoneId().systemDefault()).toInstant()))")
     @Mapping(source = "name", target = "title")
     @Mapping(source = "description", target = "content")
     public abstract TaskDTO map(Task model);

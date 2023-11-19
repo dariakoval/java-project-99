@@ -28,7 +28,7 @@ public abstract class TaskStatusMapper {
     public abstract TaskStatus map(TaskStatusCreateDTO dto);
 
     @Mapping(target = "createdAt", expression = "java(java.util.Date.from(model.getCreatedAt()"
-            + ".atZone(getZoneId().systemDefault()).toInstant()))")
+            + ".atStartOfDay().atZone(getZoneId().systemDefault()).toInstant()))")
     public abstract TaskStatusDTO map(TaskStatus model);
 
     public abstract void update(TaskStatusUpdateDTO dto, @MappingTarget TaskStatus model);

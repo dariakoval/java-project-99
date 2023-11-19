@@ -77,7 +77,8 @@ public class TaskStatusesControllerTest {
     @Test
     public void testShow() throws Exception {
         setUp();
-        var createdAt = java.util.Date.from(testTaskStatus.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant());
+        var createdAt = java.util.Date.from(testTaskStatus.getCreatedAt()
+                .atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
 
         var request = get("/api/task_statuses/{id}", testTaskStatus.getId()).with(token);
         var result = mockMvc.perform(request)
