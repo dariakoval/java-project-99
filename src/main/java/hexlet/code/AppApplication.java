@@ -2,7 +2,6 @@ package hexlet.code;
 
 import io.sentry.Sentry;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.info.Contact;
 import io.swagger.v3.oas.annotations.info.Info;
@@ -27,7 +26,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 @SecurityScheme(
         name = "JWT",
         type = SecuritySchemeType.HTTP,
-        in = SecuritySchemeIn.HEADER,
         bearerFormat = "JWT",
         scheme = "bearer"
 )
