@@ -17,6 +17,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -57,7 +58,7 @@ public class TaskService {
         var labelIds = taskData.getTaskLabelIds();
         var labels = labelIds.stream()
                 .map(i -> labelRepository.findById(i).get())
-                .toList();
+                .collect(Collectors.toSet());
         task.setLabels(labels);
 
         task.setAuthor(currentUser);
@@ -97,7 +98,7 @@ public class TaskService {
         } else if (userId == null && statusSlug == null) {
             var labels = labelIds.get().stream()
                     .map(l -> labelRepository.findById(l).get())
-                    .toList();
+                    .collect(Collectors.toSet());
             task.setLabels(labels);
             taskRepository.save(task);
         } else {
@@ -105,7 +106,7 @@ public class TaskService {
             var taskStatus = taskStatusRepository.findBySlug((statusSlug).get()).get();
             var labels = labelIds.get().stream()
                     .map(l -> labelRepository.findById(l).get())
-                    .toList();
+                    .collect(Collectors.toSet());
             task.setAssignee(user);
             task.setTaskStatus(taskStatus);
             task.setLabels(labels);

@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -321,7 +322,7 @@ public class TaskStatusesControllerTest {
         task.setAuthor(user);
         task.setAssignee(user);
         task.setTaskStatus(testTaskStatus);
-        task.setLabels(List.of(label));
+        task.setLabels(Set.of(label));
         taskRepository.save(task);
 
         var request = delete("/api/task_statuses/{id}", testTaskStatus.getId()).with(token);

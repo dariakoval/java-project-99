@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -83,7 +84,7 @@ public class TasksControllerTest {
         testTask.setAuthor(user);
         testTask.setAssignee(user);
         testTask.setTaskStatus(taskStatus);
-        testTask.setLabels(List.of(label));
+        testTask.setLabels(Set.of(label));
         taskRepository.save(testTask);
     }
 
@@ -150,7 +151,7 @@ public class TasksControllerTest {
             assertThat(body).contains(String.valueOf(task.getAssignee().getId()));
             assertThat(body).contains(task.getName());
             assertThat(body).contains(task.getTaskStatus().getName());
-            assertThat(body).contains(String.valueOf(task.getLabels().get(0).getId()));
+            assertThat(body).contains(String.valueOf(task.getLabels().iterator().next().getId()));
         }
     }
 
@@ -199,7 +200,7 @@ public class TasksControllerTest {
 
     @Test
     public void testIndexFilterWithLabelId() throws Exception {
-        var label = testTask.getLabels().get(0);
+        var label = testTask.getLabels().iterator().next();
         var labelId = label.getId();
 
         var request = get("/api/tasks?labelId=" + labelId).with(token);
@@ -245,7 +246,7 @@ public class TasksControllerTest {
         assertThat(task.getDescription()).isEqualTo(data.get("content"));
         assertThat(task.getTaskStatus().getName()).isEqualTo("Draft");
         assertThat(task.getAssignee().getId()).isEqualTo(data.get("assignee_id"));
-        assertThat(task.getLabels().get(0).getId()).isEqualTo(1L);
+        assertThat(task.getLabels().iterator().next().getId()).isEqualTo(1L);
     }
 
     @Test
@@ -271,7 +272,7 @@ public class TasksControllerTest {
         assertThat(task.getName()).isEqualTo(data.get("title"));
         assertThat(task.getTaskStatus().getName()).isEqualTo("Draft");
         assertThat(task.getAssignee().getId()).isEqualTo(data.get("assignee_id"));
-        assertThat(task.getLabels().get(0).getId()).isEqualTo(1L);
+        assertThat(task.getLabels().iterator().next().getId()).isEqualTo(1L);
     }
 
     @Test
@@ -342,7 +343,7 @@ public class TasksControllerTest {
         data.setTitle(JsonNullable.of(faker.lorem().word()));
         data.setContent(JsonNullable.of(faker.lorem().sentence()));
         data.setStatus(JsonNullable.of("published"));
-        data.setTaskLabelIds(JsonNullable.of(List.of(1L, 2L)));
+        data.setTaskLabelIds(JsonNullable.of(List.of(2L)));
 
         var request = put("/api/tasks/{id}", testTask.getId()).with(token)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -359,8 +360,7 @@ public class TasksControllerTest {
         assertThat(updatedTask.getName()).isEqualTo(data.getTitle().get());
         assertThat(updatedTask.getDescription()).isEqualTo(data.getContent().get());
         assertThat(updatedTask.getTaskStatus().getSlug()).isEqualTo(data.getStatus().get());
-        assertThat(updatedTask.getLabels().get(0).getId()).isEqualTo(1L);
-        assertThat(updatedTask.getLabels().get(1).getId()).isEqualTo(2L);
+        assertThat(updatedTask.getLabels().iterator().next().getId()).isEqualTo(2L);
     }
 
     @Test
