@@ -66,7 +66,9 @@ public class TasksController {
                     schema = @Schema(implementation = TaskDTO.class)) })
     @GetMapping("")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<List<TaskDTO>> index(TaskParamsDTO params) {
+    public ResponseEntity<List<TaskDTO>> index(
+            @Parameter(description = "Filtering parameters for task list")
+            TaskParamsDTO params) {
         var tasks = taskService.getAll(params);
 
         return ResponseEntity.ok()

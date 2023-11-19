@@ -110,8 +110,7 @@ public class TasksControllerTest {
                 v -> v.node("content").isEqualTo(testTask.getDescription()),
                 v -> v.node("status").isEqualTo(testTask.getTaskStatus().getName()),
                 v -> v.node("assigneeId").isEqualTo(testTask.getAssignee().getId()),
-                v -> v.node("createdAt").isEqualTo(createdAt),
-                v -> v.node("taskLabelIds").isArray()
+                v -> v.node("createdAt").isEqualTo(createdAt)
         );
     }
 
