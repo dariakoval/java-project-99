@@ -28,11 +28,8 @@ public abstract class UserMapper {
     @Mapping(target = "passwordDigest", source = "password")
     public abstract User map(UserCreateDTO dto);
 
-    @Mapping(target = "passwordDigest", source = "password")
     @Mapping(target = "createdAt", expression = "java(java.util.Date.from(model.getCreatedAt()"
-            + ".atZone(getZoneId().systemDefault()).toInstant()))")
-    @Mapping(target = "updatedAt", expression = "java(java.util.Date.from(model.getUpdatedAt()"
-            + ".atZone(getZoneId().systemDefault()).toInstant()))")
+            + ".atStartOfDay().atZone(getZoneId().systemDefault()).toInstant()))")
     public abstract UserDTO map(User model);
 
     public abstract void update(UserUpdateDTO dto, @MappingTarget User model);

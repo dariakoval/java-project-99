@@ -83,8 +83,8 @@ public class UsersControllerTest {
 
     @Test
     public void testShow() throws Exception {
-        var createdAt = java.util.Date.from(testUser.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant());
-        var updatedAt = java.util.Date.from(testUser.getUpdatedAt().atZone(ZoneId.systemDefault()).toInstant());
+        var createdAt = java.util.Date.from(testUser.getCreatedAt().atStartOfDay()
+                .atZone(ZoneId.systemDefault()).toInstant());
 
         var request = get("/api/users/{id}", testUser.getId()).with(token);
         var result = mockMvc.perform(request)
@@ -96,9 +96,7 @@ public class UsersControllerTest {
                 v -> v.node("email").isEqualTo(testUser.getEmail()),
                 v -> v.node("firstName").isEqualTo(testUser.getFirstName()),
                 v -> v.node("lastName").isEqualTo(testUser.getLastName()),
-                v -> v.node("createdAt").isEqualTo(createdAt),
-                v -> v.node("updatedAt").isEqualTo(updatedAt),
-                v -> v.node("passwordDigest").isEqualTo(testUser.getPasswordDigest())
+                v -> v.node("createdAt").isEqualTo(createdAt)
         );
     }
 
@@ -132,7 +130,6 @@ public class UsersControllerTest {
         assertThat(body).contains(testUser.getEmail());
         assertThat(body).contains(testUser.getFirstName());
         assertThat(body).contains(testUser.getLastName());
-        assertThat(body).contains(testUser.getPasswordDigest());
     }
 
     @Test
