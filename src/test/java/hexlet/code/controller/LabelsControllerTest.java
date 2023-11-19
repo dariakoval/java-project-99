@@ -66,7 +66,8 @@ public class LabelsControllerTest {
 
     @Test
     public void testShow() throws Exception {
-        var createdAt = java.util.Date.from(testLabel.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant());
+        var createdAt = java.util.Date.from(testLabel.getCreatedAt()
+                .atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
 
         var request = get("/api/labels/{id}", testLabel.getId()).with(token);
         var result = mockMvc.perform(request)

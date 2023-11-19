@@ -28,7 +28,7 @@ public abstract class LabelMapper {
     public abstract Label map(LabelCreateDTO dto);
 
     @Mapping(target = "createdAt", expression = "java(java.util.Date.from(model.getCreatedAt()"
-            + ".atZone(getZoneId().systemDefault()).toInstant()))")
+            + ".atStartOfDay().atZone(getZoneId().systemDefault()).toInstant()))")
     public abstract LabelDTO map(Label model);
 
     public abstract void update(LabelUpdateDTO dto, @MappingTarget Label model);
