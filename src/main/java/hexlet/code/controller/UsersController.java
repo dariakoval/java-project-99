@@ -96,10 +96,13 @@ public class UsersController {
             @ApiResponse(responseCode = "200", description = "User updated",
                     content = { @Content(mediaType = "application/json",
                             schema = @Schema(implementation = UserDTO.class)) }),
-            @ApiResponse(responseCode = "400", description = "Invalid user data supplied",
-                    content = @Content),
-            @ApiResponse(responseCode = "404", description = "User with that id not found") })
+            @ApiResponse(responseCode = "400", description = "Invalid user data supplied", content = @Content),
+            @ApiResponse(responseCode = "404", description = "User with that id not found", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Operation not possible. Access denied",
+            content = @Content)
+    })
     @PutMapping(ID)
+    @PreAuthorize(ONLY_OWNER_BY_ID)
     @ResponseStatus(HttpStatus.OK)
     public UserDTO update(
             @Parameter(description = "User data to update")
@@ -112,7 +115,8 @@ public class UsersController {
     @Operation(summary = "Delete user by his id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "User deleted", content = @Content),
-            @ApiResponse(responseCode = "405", description = "Operation not possible", content = @Content)
+            @ApiResponse(responseCode = "403", description = "Operation not possible. Access denied",
+                    content = @Content)
     })
     @DeleteMapping(ID)
     @PreAuthorize(ONLY_OWNER_BY_ID)
