@@ -48,6 +48,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-security:3.0.4")
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server:3.1.0")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
+	implementation ("io.swagger.core.v3:swagger-annotations:2.1.10")
 
 	testImplementation(platform("org.junit:junit-bom:5.10.0"))
 	testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
