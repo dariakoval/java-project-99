@@ -81,7 +81,6 @@ public class TasksControllerTest {
                 .orElseThrow(() -> new RuntimeException("Label doesn't exist"));
 
         testTask = Instancio.of(modelGenerator.getTaskModel()).create();
-        testTask.setAuthor(user);
         testTask.setAssignee(user);
         testTask.setTaskStatus(taskStatus);
         testTask.setLabels(Set.of(label));

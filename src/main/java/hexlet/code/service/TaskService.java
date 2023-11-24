@@ -44,7 +44,6 @@ public class TaskService {
     }
 
     public TaskDTO create(TaskCreateDTO taskData) {
-        var currentUser = userUtils.getCurrentUser();
         var task = taskMapper.map(taskData);
 
         var assigneeId = taskData.getAssigneeId();
@@ -57,7 +56,6 @@ public class TaskService {
         var labels = labelRepository.findByIdIn(labelIds);
 
         task.setLabels(labels);
-        task.setAuthor(currentUser);
         task.setAssignee(assignee);
         task.setTaskStatus(taskStatus);
 

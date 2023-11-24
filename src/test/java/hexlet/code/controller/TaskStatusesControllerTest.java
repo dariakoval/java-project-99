@@ -319,7 +319,6 @@ public class TaskStatusesControllerTest {
                 .orElseThrow(() -> new RuntimeException("Label doesn't exist"));
 
         var task = Instancio.of(modelGenerator.getTaskModel()).create();
-        task.setAuthor(user);
         task.setAssignee(user);
         task.setTaskStatus(testTaskStatus);
         task.setLabels(Set.of(label));

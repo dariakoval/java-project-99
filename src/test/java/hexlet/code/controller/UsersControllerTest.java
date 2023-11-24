@@ -329,7 +329,6 @@ public class UsersControllerTest {
                 .orElseThrow(() -> new RuntimeException("Label doesn't exist"));
 
         var task = Instancio.of(modelGenerator.getTaskModel()).create();
-        task.setAuthor(testUser);
         task.setAssignee(testUser);
         task.setTaskStatus(taskStatus);
         task.setLabels(Set.of(label));

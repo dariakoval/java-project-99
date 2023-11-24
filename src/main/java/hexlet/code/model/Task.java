@@ -35,10 +35,6 @@ public class Task implements BaseEntity {
 
     private Integer index;
 
-    @ManyToOne
-    @NotNull
-    private User author;
-
     @NotBlank
     private String name;
 
