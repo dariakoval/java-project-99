@@ -28,16 +28,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static hexlet.code.controller.LabelsController.LABELS_CONTROLLER_PATH;
-
 @Tag(name = "Labels controller", description = "Manages task labels")
 @RestController
-@RequestMapping("${base-url}" + LABELS_CONTROLLER_PATH)
+@RequestMapping("/api/labels")
 @AllArgsConstructor
 @SecurityRequirement(name = "JWT")
 public class LabelsController {
-
-    public static final String LABELS_CONTROLLER_PATH = "/labels";
 
     public static final String ID = "/{id}";
 

@@ -29,17 +29,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-//import static hexlet.code.controller.TasksController.TASK_CONTROLLER_PATH;
-
 @Tag(name = "Tasks controller", description = "Manages user tasks")
 @RestController
-//@RequestMapping("${base-url}" + TASK_CONTROLLER_PATH)
 @RequestMapping("/api/tasks")
 @AllArgsConstructor
 @SecurityRequirement(name = "JWT")
 public class TasksController {
-
-    public static final String TASK_CONTROLLER_PATH = "/tasks";
 
     public static final String ID = "/{id}";
 

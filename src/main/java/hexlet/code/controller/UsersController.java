@@ -29,16 +29,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static hexlet.code.controller.UsersController.USER_CONTROLLER_PATH;
-
 @Tag(name = "Users controller", description = "Interaction with users")
 @RestController
-@RequestMapping("${base-url}" + USER_CONTROLLER_PATH)
+@RequestMapping("/api/users")
 @AllArgsConstructor
 @SecurityRequirement(name = "JWT")
 public class UsersController {
-
-    public static final String USER_CONTROLLER_PATH = "/users";
 
     public static final String ID = "/{id}";
 

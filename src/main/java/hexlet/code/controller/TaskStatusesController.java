@@ -28,16 +28,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static hexlet.code.controller.TaskStatusesController.TASK_STATUSES_CONTROLLER_PATH;
-
 @Tag(name = "TaskStatuses controller", description = "Manages task statuses")
 @RestController
-@RequestMapping("${base-url}" + TASK_STATUSES_CONTROLLER_PATH)
+@RequestMapping("/api/task_statuses")
 @AllArgsConstructor
 @SecurityRequirement(name = "JWT")
 public class TaskStatusesController {
-
-    public static final String TASK_STATUSES_CONTROLLER_PATH = "/task_statuses";
 
     public static final String ID = "/{id}";
 
