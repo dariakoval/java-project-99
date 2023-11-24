@@ -15,7 +15,6 @@ import org.mapstruct.ReportingPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.ZoneId;
-import java.util.stream.Collectors;
 
 @Getter
 @Mapper(
@@ -31,15 +30,10 @@ public abstract class TaskMapper {
 
     private ZoneId zoneId;
 
-    private Collectors collectors;
-
     @Mapping(target = "assignee.id", source = "assigneeId")
     @Mapping(target = "taskStatus.name", source = "status")
-    @Mapping(
-            target = "labels",
-            expression = "java(dto.getTaskLabelIds().stream()"
-                    + ".map(i -> getLabelRepository().findById(i).get()).collect(getCollectors().toSet()))"
-    )
+    @Mapping(target = "labels",
+            expression = "java(getLabelRepository().findByIdIn(dto.getTaskLabelIds()))")
     @Mapping(target = "name", source = "title")
     @Mapping(target = "description", source = "content")
     public abstract Task map(TaskCreateDTO dto);

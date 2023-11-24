@@ -335,7 +335,7 @@ public class TasksControllerTest {
 
     @Test
     public void testUpdate() throws Exception {
-        var user = userRepository.findByEmail("hexlet@example.com").get();
+        var user = userRepository.findByEmail("hexlet@example.com").orElseThrow();
 
         var data = new TaskUpdateDTO();
         data.setIndex(JsonNullable.of(faker.number().positive()));

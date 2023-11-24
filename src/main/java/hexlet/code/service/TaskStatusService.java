@@ -3,7 +3,6 @@ package hexlet.code.service;
 import hexlet.code.dto.TaskStatusCreateDTO;
 import hexlet.code.dto.TaskStatusDTO;
 import hexlet.code.dto.TaskStatusUpdateDTO;
-import hexlet.code.exception.MethodNotAllowedException;
 import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.mapper.TaskStatusMapper;
 import hexlet.code.repository.TaskRepository;
@@ -53,13 +52,6 @@ public class TaskStatusService {
     }
 
     public void delete(Long id) {
-        var taskStatus = taskStatusRepository.findById(id).get();
-        var task = taskRepository.findByTaskStatus(taskStatus);
-
-        if (task.isEmpty()) {
-            taskStatusRepository.deleteById(id);
-        } else {
-            throw new MethodNotAllowedException("Operation not possible");
-        }
+        taskStatusRepository.deleteById(id);
     }
 }

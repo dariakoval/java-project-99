@@ -3,7 +3,6 @@ package hexlet.code.service;
 import hexlet.code.dto.LabelCreateDTO;
 import hexlet.code.dto.LabelDTO;
 import hexlet.code.dto.LabelUpdateDTO;
-import hexlet.code.exception.MethodNotAllowedException;
 import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.mapper.LabelMapper;
 import hexlet.code.repository.LabelRepository;
@@ -12,7 +11,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -54,18 +52,6 @@ public class LabelService {
     }
 
     public void delete(Long id) {
-        var tasks = taskRepository.findAll();
-        Optional<Long> match = tasks.stream()
-                .map(task -> task.getLabels())
-                .flatMap(labels -> labels.stream())
-                .map(label -> label.getId())
-                .filter(i -> i.equals(id))
-                .findAny();
-
-        if (match.isEmpty()) {
-            labelRepository.deleteById(id);
-        } else {
-            throw new MethodNotAllowedException("Operation not possible");
-        }
+        labelRepository.deleteById(id);
     }
 }

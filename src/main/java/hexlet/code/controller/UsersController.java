@@ -115,8 +115,7 @@ public class UsersController {
     @Operation(summary = "Delete user by his id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "User deleted", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Operation not possible. Access denied",
-                    content = @Content)
+            @ApiResponse(responseCode = "405", description = "Operation not possible", content = @Content)
     })
     @DeleteMapping(ID)
     @PreAuthorize(ONLY_OWNER_BY_ID)

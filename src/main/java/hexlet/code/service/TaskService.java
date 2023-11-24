@@ -4,7 +4,6 @@ import hexlet.code.dto.TaskCreateDTO;
 import hexlet.code.dto.TaskDTO;
 import hexlet.code.dto.TaskParamsDTO;
 import hexlet.code.dto.TaskUpdateDTO;
-import hexlet.code.exception.MethodNotAllowedException;
 import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.mapper.TaskMapper;
 import hexlet.code.repository.LabelRepository;
@@ -17,7 +16,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -50,17 +48,15 @@ public class TaskService {
         var task = taskMapper.map(taskData);
 
         var assigneeId = taskData.getAssigneeId();
-        var assignee = userRepository.findById(assigneeId).get();
+        var assignee = userRepository.findById(assigneeId).orElse(null);
 
         var statusSlug = taskData.getStatus();
-        var taskStatus = taskStatusRepository.findBySlug(statusSlug).get();
+        var taskStatus = taskStatusRepository.findBySlug(statusSlug).orElse(null);
 
         var labelIds = taskData.getTaskLabelIds();
-        var labels = labelIds.stream()
-                .map(i -> labelRepository.findById(i).get())
-                .collect(Collectors.toSet());
-        task.setLabels(labels);
+        var labels = labelRepository.findByIdIn(labelIds);
 
+        task.setLabels(labels);
         task.setAuthor(currentUser);
         task.setAssignee(assignee);
         task.setTaskStatus(taskStatus);
@@ -88,25 +84,21 @@ public class TaskService {
         if (userId == null && statusSlug == null && labelIds == null) {
             taskRepository.save(task);
         } else if (userId == null && labelIds == null) {
-            var taskStatus = taskStatusRepository.findBySlug((statusSlug).get()).get();
+            var taskStatus = taskStatusRepository.findBySlug((statusSlug).get()).orElse(null);
             task.setTaskStatus(taskStatus);
             taskRepository.save(task);
         } else if (statusSlug == null && labelIds == null) {
-            var user =  userRepository.findById(userId.get()).get();
+            var user =  userRepository.findById(userId.get()).orElse(null);
             task.setAssignee(user);
             taskRepository.save(task);
         } else if (userId == null && statusSlug == null) {
-            var labels = labelIds.get().stream()
-                    .map(l -> labelRepository.findById(l).get())
-                    .collect(Collectors.toSet());
+            var labels = labelRepository.findByIdIn(labelIds.get());
             task.setLabels(labels);
             taskRepository.save(task);
         } else {
-            var user =  userRepository.findById(userId.get()).get();
-            var taskStatus = taskStatusRepository.findBySlug((statusSlug).get()).get();
-            var labels = labelIds.get().stream()
-                    .map(l -> labelRepository.findById(l).get())
-                    .collect(Collectors.toSet());
+            var user =  userRepository.findById(userId.get()).orElse(null);
+            var taskStatus = taskStatusRepository.findBySlug((statusSlug).get()).orElse(null);
+            var labels = labelRepository.findByIdIn(labelIds.get());
             task.setAssignee(user);
             task.setTaskStatus(taskStatus);
             task.setLabels(labels);
@@ -118,14 +110,6 @@ public class TaskService {
     }
 
     public void delete(Long id) {
-        var currentUser = userUtils.getCurrentUser();
-        var task = taskRepository.findById(id).get();
-        var author = task.getAuthor();
-
-        if (currentUser.equals(author)) {
-            taskRepository.deleteById(id);
-        } else {
-            throw new MethodNotAllowedException("Operation not possible");
-        }
+        taskRepository.deleteById(id);
     }
 }
