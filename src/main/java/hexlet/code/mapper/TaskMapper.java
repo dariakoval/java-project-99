@@ -3,8 +3,10 @@ package hexlet.code.mapper;
 import hexlet.code.dto.TaskCreateDTO;
 import hexlet.code.dto.TaskDTO;
 import hexlet.code.dto.TaskUpdateDTO;
+import hexlet.code.model.Label;
 import hexlet.code.model.Task;
 import hexlet.code.repository.LabelRepository;
+import hexlet.code.repository.UserRepository;
 import lombok.Getter;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -15,6 +17,7 @@ import org.mapstruct.ReportingPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.ZoneId;
+import java.util.HashSet;
 
 @Getter
 @Mapper(
@@ -28,12 +31,17 @@ public abstract class TaskMapper {
     @Autowired
     private LabelRepository labelRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    private final HashSet<Label> hashSet = new HashSet<>();
+
     private ZoneId zoneId;
 
-    @Mapping(target = "assignee.id", source = "assigneeId")
+    @Mapping(target = "assignee", source = "assigneeId")
     @Mapping(target = "taskStatus.name", source = "status")
     @Mapping(target = "labels",
-            expression = "java(getLabelRepository().findByIdIn(dto.getTaskLabelIds()))")
+            expression = "java(getLabelRepository().findByIdIn(dto.getTaskLabelIds()).orElse(getHashSet()))")
     @Mapping(target = "name", source = "title")
     @Mapping(target = "description", source = "content")
     public abstract Task map(TaskCreateDTO dto);

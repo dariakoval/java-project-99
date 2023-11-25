@@ -11,10 +11,10 @@ import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
 import hexlet.code.specification.TaskSpecification;
-import hexlet.code.util.UserUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -31,8 +31,6 @@ public class TaskService {
 
     private final TaskMapper taskMapper;
 
-    private final UserUtils userUtils;
-
     private final TaskSpecification specBuilder;
 
     public List<TaskDTO> getAll(TaskParamsDTO params) {
@@ -47,16 +45,15 @@ public class TaskService {
         var task = taskMapper.map(taskData);
 
         var assigneeId = taskData.getAssigneeId();
-        var assignee = userRepository.findById(assigneeId).orElse(null);
+
+        if (assigneeId != null) {
+            var assignee = userRepository.findById(assigneeId).orElse(null);
+            task.setAssignee(assignee);
+        }
 
         var statusSlug = taskData.getStatus();
         var taskStatus = taskStatusRepository.findBySlug(statusSlug).orElse(null);
 
-        var labelIds = taskData.getTaskLabelIds();
-        var labels = labelRepository.findByIdIn(labelIds);
-
-        task.setLabels(labels);
-        task.setAssignee(assignee);
         task.setTaskStatus(taskStatus);
 
         taskRepository.save(task);
@@ -90,13 +87,13 @@ public class TaskService {
             task.setAssignee(user);
             taskRepository.save(task);
         } else if (userId == null && statusSlug == null) {
-            var labels = labelRepository.findByIdIn(labelIds.get());
+            var labels = labelRepository.findByIdIn(labelIds.get()).orElse(new HashSet<>());
             task.setLabels(labels);
             taskRepository.save(task);
         } else {
             var user =  userRepository.findById(userId.get()).orElse(null);
             var taskStatus = taskStatusRepository.findBySlug((statusSlug).get()).orElse(null);
-            var labels = labelRepository.findByIdIn(labelIds.get());
+            var labels = labelRepository.findByIdIn(labelIds.get()).orElse(new HashSet<>());
             task.setAssignee(user);
             task.setTaskStatus(taskStatus);
             task.setLabels(labels);
