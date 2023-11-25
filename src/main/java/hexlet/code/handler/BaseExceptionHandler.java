@@ -51,7 +51,7 @@ public class BaseExceptionHandler {
 
     @ResponseStatus(FORBIDDEN)
     @ExceptionHandler(AccessDeniedException.class)
-    public String accessDeniedException(AccessDeniedException exception) {
+    public String accessDeniedExceptionHandler(AccessDeniedException exception) {
         return exception.getMessage();
     }
 

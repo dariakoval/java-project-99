@@ -46,16 +46,16 @@ public abstract class TaskMapper {
 
     @Mapping(source = "assignee.id", target = "assigneeId")
     @Mapping(source = "taskStatus.slug", target = "status")
-    @Mapping(target = "createdAt", source = "createdAt")
     @Mapping(source = "name", target = "title")
     @Mapping(source = "description", target = "content")
+    @Mapping(target = "createdAt", source = "createdAt")
     public abstract TaskDTO map(Task model);
 
-    @Mapping(target = "name", source = "title")
-    @Mapping(target = "description", source = "content")
     @Mapping(target = "assignee", source = "assigneeId")
     @Mapping(target = "taskStatus.slug", source = "status")
     @Mapping(target = "labels", source = "taskLabelIds")
+    @Mapping(target = "name", source = "title")
+    @Mapping(target = "description", source = "content")
     public abstract void update(TaskUpdateDTO dto, @MappingTarget Task model);
 
     public Set<Label> toLabelsSet(List<Long> taskLabelIds) {

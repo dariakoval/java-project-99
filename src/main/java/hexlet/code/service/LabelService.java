@@ -6,7 +6,6 @@ import hexlet.code.dto.LabelUpdateDTO;
 import hexlet.code.exception.ResourceNotFoundException;
 import hexlet.code.mapper.LabelMapper;
 import hexlet.code.repository.LabelRepository;
-import hexlet.code.repository.TaskRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,8 +14,6 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 public class LabelService {
-
-    private final TaskRepository taskRepository;
 
     private final LabelRepository labelRepository;
 
