@@ -6,7 +6,6 @@ import hexlet.code.dto.TaskUpdateDTO;
 import hexlet.code.model.Label;
 import hexlet.code.model.Task;
 import hexlet.code.repository.LabelRepository;
-import hexlet.code.repository.UserRepository;
 import lombok.Getter;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -16,8 +15,12 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Getter
 @Mapper(
@@ -31,19 +34,11 @@ public abstract class TaskMapper {
     @Autowired
     private LabelRepository labelRepository;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    private final HashSet<Label> hashSet = new HashSet<>();
-
     private final String defaultContent = "";
-
-    private ZoneId zoneId;
 
     @Mapping(target = "assignee", source = "assigneeId")
     @Mapping(target = "taskStatus.slug", source = "status")
-    @Mapping(target = "labels",
-            expression = "java(getLabelRepository().findByIdIn(dto.getTaskLabelIds()).orElse(getHashSet()))")
+    @Mapping(target = "labels", source = "taskLabelIds")
     @Mapping(target = "name", source = "title")
     @Mapping(target = "description",
             expression = "java(dto.getContent() == null ? getDefaultContent() : dto.getContent())")
@@ -51,13 +46,23 @@ public abstract class TaskMapper {
 
     @Mapping(source = "assignee.id", target = "assigneeId")
     @Mapping(source = "taskStatus.slug", target = "status")
-    @Mapping(target = "createdAt", expression = "java(java.util.Date.from(model.getCreatedAt()"
-            + ".atStartOfDay().atZone(getZoneId().systemDefault()).toInstant()))")
+    @Mapping(target = "createdAt", source = "createdAt")
     @Mapping(source = "name", target = "title")
     @Mapping(source = "description", target = "content")
     public abstract TaskDTO map(Task model);
 
     @Mapping(target = "name", source = "title")
     @Mapping(target = "description", source = "content")
+    @Mapping(target = "assignee", source = "assigneeId")
+    @Mapping(target = "taskStatus.slug", source = "status")
+    @Mapping(target = "labels", source = "taskLabelIds")
     public abstract void update(TaskUpdateDTO dto, @MappingTarget Task model);
+
+    public Set<Label> toLabelsSet(List<Long> taskLabelIds) {
+        return new HashSet<>(labelRepository.findByIdIn(taskLabelIds).orElse(new HashSet<>()));
+    }
+
+    public Date toDate(LocalDate createdAt) {
+        return java.util.Date.from(createdAt.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+    }
 }

@@ -14,7 +14,6 @@ import hexlet.code.specification.TaskSpecification;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -71,35 +70,16 @@ public class TaskService {
     public TaskDTO update(TaskUpdateDTO taskData, Long id) {
         var task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(String.format("Task with id %s not found", id)));
-        var userId = taskData.getAssigneeId();
-        var statusSlug = taskData.getStatus();
-        var labelIds = taskData.getTaskLabelIds();
-        taskMapper.update(taskData, task);
 
-        if (userId == null && statusSlug == null && labelIds == null) {
-            taskRepository.save(task);
-        } else if (userId == null && labelIds == null) {
+        taskMapper.update(taskData, task);
+        var statusSlug = taskData.getStatus();
+
+        if (statusSlug != null) {
             var taskStatus = taskStatusRepository.findBySlug((statusSlug).get()).orElse(null);
             task.setTaskStatus(taskStatus);
-            taskRepository.save(task);
-        } else if (statusSlug == null && labelIds == null) {
-            var user =  userRepository.findById(userId.get()).orElse(null);
-            task.setAssignee(user);
-            taskRepository.save(task);
-        } else if (userId == null && statusSlug == null) {
-            var labels = labelRepository.findByIdIn(labelIds.get()).orElse(new HashSet<>());
-            task.setLabels(labels);
-            taskRepository.save(task);
-        } else {
-            var user =  userRepository.findById(userId.get()).orElse(null);
-            var taskStatus = taskStatusRepository.findBySlug((statusSlug).get()).orElse(null);
-            var labels = labelRepository.findByIdIn(labelIds.get()).orElse(new HashSet<>());
-            task.setAssignee(user);
-            task.setTaskStatus(taskStatus);
-            task.setLabels(labels);
-            taskRepository.save(task);
         }
 
+        taskRepository.save(task);
         var taskDto = taskMapper.map(task);
         return taskDto;
     }
