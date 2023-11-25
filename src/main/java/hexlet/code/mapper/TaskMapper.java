@@ -36,6 +36,8 @@ public abstract class TaskMapper {
 
     private final HashSet<Label> hashSet = new HashSet<>();
 
+    private final String defaultContent = "";
+
     private ZoneId zoneId;
 
     @Mapping(target = "assignee", source = "assigneeId")
@@ -43,7 +45,8 @@ public abstract class TaskMapper {
     @Mapping(target = "labels",
             expression = "java(getLabelRepository().findByIdIn(dto.getTaskLabelIds()).orElse(getHashSet()))")
     @Mapping(target = "name", source = "title")
-    @Mapping(target = "description", source = "content")
+    @Mapping(target = "description",
+            expression = "java(dto.getContent() == null ? getDefaultContent() : dto.getContent())")
     public abstract Task map(TaskCreateDTO dto);
 
     @Mapping(source = "assignee.id", target = "assigneeId")

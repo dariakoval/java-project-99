@@ -246,7 +246,8 @@ public class UsersControllerTest {
                 "password", faker.internet().password(3, 12)
         );
 
-        var request = put("/api/users/{id}", testUser.getId()).with(token)
+        var jwt = jwt().jwt(builder -> builder.subject(testUser.getEmail()));
+        var request = put("/api/users/{id}", testUser.getId()).with(jwt)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
@@ -269,7 +270,8 @@ public class UsersControllerTest {
                 "lastName", faker.name().lastName()
         );
 
-        var request = put("/api/users/{id}", testUser.getId()).with(token)
+        var jwt = jwt().jwt(builder -> builder.subject(testUser.getEmail()));
+        var request = put("/api/users/{id}", testUser.getId()).with(jwt)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(om.writeValueAsString(data));
 
@@ -305,7 +307,8 @@ public class UsersControllerTest {
 
     @Test
     public void testDestroy() throws Exception {
-        var request = delete("/api/users/{id}", testUser.getId()).with(token);
+        var jwt = jwt().jwt(builder -> builder.subject(testUser.getEmail()));
+        var request = delete("/api/users/{id}", testUser.getId()).with(jwt);
         mockMvc.perform(request)
                 .andExpect(status().isNoContent());
 
@@ -334,7 +337,8 @@ public class UsersControllerTest {
         task.setLabels(Set.of(label));
         taskRepository.save(task);
 
-        var request = delete("/api/users/{id}", testUser.getId()).with(token);
+        var jwt = jwt().jwt(builder -> builder.subject(testUser.getEmail()));
+        var request = delete("/api/users/{id}", testUser.getId()).with(jwt);
         mockMvc.perform(request)
                 .andExpect(status().isMethodNotAllowed());
     }
