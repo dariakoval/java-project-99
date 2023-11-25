@@ -41,7 +41,7 @@ public abstract class TaskMapper {
     private ZoneId zoneId;
 
     @Mapping(target = "assignee", source = "assigneeId")
-    @Mapping(target = "taskStatus.name", source = "status")
+    @Mapping(target = "taskStatus.slug", source = "status")
     @Mapping(target = "labels",
             expression = "java(getLabelRepository().findByIdIn(dto.getTaskLabelIds()).orElse(getHashSet()))")
     @Mapping(target = "name", source = "title")
@@ -50,7 +50,7 @@ public abstract class TaskMapper {
     public abstract Task map(TaskCreateDTO dto);
 
     @Mapping(source = "assignee.id", target = "assigneeId")
-    @Mapping(source = "taskStatus.name", target = "status")
+    @Mapping(source = "taskStatus.slug", target = "status")
     @Mapping(target = "createdAt", expression = "java(java.util.Date.from(model.getCreatedAt()"
             + ".atStartOfDay().atZone(getZoneId().systemDefault()).toInstant()))")
     @Mapping(source = "name", target = "title")

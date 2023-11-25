@@ -107,7 +107,7 @@ public class TasksControllerTest {
                 v -> v.node("index").isEqualTo(testTask.getIndex()),
                 v -> v.node("title").isEqualTo(testTask.getName()),
                 v -> v.node("content").isEqualTo(testTask.getDescription()),
-                v -> v.node("status").isEqualTo(testTask.getTaskStatus().getName()),
+                v -> v.node("status").isEqualTo(testTask.getTaskStatus().getSlug()),
                 v -> v.node("assigneeId").isEqualTo(testTask.getAssignee().getId()),
                 v -> v.node("createdAt").isEqualTo(createdAt)
         );
@@ -149,7 +149,7 @@ public class TasksControllerTest {
             assertThat(body).contains(String.valueOf(task.getId()));
             assertThat(body).contains(String.valueOf(task.getAssignee().getId()));
             assertThat(body).contains(task.getName());
-            assertThat(body).contains(task.getTaskStatus().getName());
+            assertThat(body).contains(task.getTaskStatus().getSlug());
             assertThat(body).contains(String.valueOf(task.getLabels().iterator().next().getId()));
         }
     }
@@ -185,7 +185,6 @@ public class TasksControllerTest {
     @Test
     public void testIndexFilterWithStatus() throws Exception {
         var status = testTask.getTaskStatus().getSlug();
-        var statusName = testTask.getTaskStatus().getName();
 
         var request = get("/api/tasks?status=" + status).with(token);
         var result = mockMvc.perform(request)
@@ -194,7 +193,7 @@ public class TasksControllerTest {
 
         var body = result.getResponse().getContentAsString();
         assertThatJson(body).isArray();
-        assertThat(body).contains(statusName);
+        assertThat(body).contains(status);
     }
 
     @Test
