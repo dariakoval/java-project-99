@@ -29,6 +29,12 @@ Java, Gradle, Spring Boot, Spring Security, Spring Data JPA, GNU Make, Docker, H
 make setup
 ```
 
+## Install
+
+```bash
+make install
+```
+
 ## Run server
 
 ```bash
