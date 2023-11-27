@@ -37,6 +37,12 @@ public class DataInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
+        addSuperUser();
+        addDefaultSlugs();
+        addDefaultLabels();
+    }
+
+    public void addSuperUser() {
         var userData = new UserCreateDTO();
         userData.setEmail("hexlet@example.com");
         userData.setPassword("qwerty");
@@ -44,7 +50,9 @@ public class DataInitializer implements ApplicationRunner {
         var hashedPassword = passwordEncoder.encode(user.getPassword());
         user.setPasswordDigest(hashedPassword);
         userRepository.save(user);
+    }
 
+    public void addDefaultSlugs() {
         List<String> defaultSlugs = List.of("draft", "to_review", "to_be_fixed", "to_publish", "published");
         defaultSlugs.forEach(slug -> {
             var statusData = new TaskStatusCreateDTO();
@@ -63,13 +71,15 @@ public class DataInitializer implements ApplicationRunner {
             var status = taskStatusMapper.map(statusData);
             taskStatusRepository.save(status);
         });
+    }
 
+    public void addDefaultLabels() {
         List<String> defaultLabels = List.of("feature", "bug");
         defaultLabels.forEach(name -> {
-             var labelData = new LabelCreateDTO();
-             labelData.setName(name);
-             var label = labelMapper.map(labelData);
-             labelRepository.save(label);
+            var labelData = new LabelCreateDTO();
+            labelData.setName(name);
+            var label = labelMapper.map(labelData);
+            labelRepository.save(label);
         });
     }
 }
