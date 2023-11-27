@@ -115,10 +115,9 @@ public class TasksControllerTest {
 
     @Test
     public void testShowTaskNotFound() throws Exception {
-        Long id = 100L;
-        taskRepository.deleteById(id);
+        mockMvc.perform(delete("/api/tasks/{id}", testTask.getId()).with(token));
 
-        var request = get("/api/tasks/{id}", id).with(token);
+        var request = get("/api/tasks/{id}", testTask.getId()).with(token);
         mockMvc.perform(request)
                 .andExpect(status().isNotFound());
     }

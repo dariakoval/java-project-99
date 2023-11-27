@@ -96,11 +96,11 @@ public class TaskStatusesControllerTest {
 
     @Test
     public void testShowTaskStatusNotFound() throws Exception {
+        setUp();
         token = jwt().jwt(builder -> builder.subject("hexlet@example.com"));
-        Long id = 100L;
-        taskStatusRepository.deleteById(id);
+        mockMvc.perform(delete("/api/task_statuses/{id}", testTaskStatus.getId()).with(token));
 
-        var request = get("/api/task_statuses/{id}", id).with(token);
+        var request = get("/api/task_statuses/{id}", testTaskStatus.getId()).with(token);
         mockMvc.perform(request)
                 .andExpect(status().isNotFound());
     }

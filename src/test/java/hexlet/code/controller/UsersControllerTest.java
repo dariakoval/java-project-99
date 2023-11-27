@@ -102,10 +102,10 @@ public class UsersControllerTest {
 
     @Test
     public void testShowUserNotFound() throws Exception {
-        Long id = 100L;
-        userRepository.deleteById(id);
+        var jwt = jwt().jwt(builder -> builder.subject(testUser.getEmail()));
+        mockMvc.perform(delete("/api/users/{id}", testUser.getId()).with(jwt));
 
-        var request = get("/api/users/{id}", id).with(token);
+        var request = get("/api/users/{id}", testUser.getId()).with(jwt);
         mockMvc.perform(request)
                 .andExpect(status().isNotFound());
     }

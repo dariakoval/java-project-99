@@ -83,10 +83,9 @@ public class LabelsControllerTest {
 
     @Test
     public void testShowLabelNotFound() throws Exception {
-        Long id = 100L;
-        labelRepository.deleteById(id);
+        mockMvc.perform(delete("/api/labels/{id}", testLabel.getId()).with(token));
 
-        var request = get("/api/labels/{id}", id).with(token);
+        var request = get("/api/labels/{id}", testLabel.getId()).with(token);
         mockMvc.perform(request)
                 .andExpect(status().isNotFound());
     }
